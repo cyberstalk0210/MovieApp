@@ -7,8 +7,8 @@ import org.springframework.security.web.SecurityFilterChain;
 
 public class SecurityConfig{
 
+    //TODO Filter chain to'g'irlash kerak.
     @Bean
-
     public SecurityFilterChain filterChain(HttpSecurity http) throws Exception {
 
         http
