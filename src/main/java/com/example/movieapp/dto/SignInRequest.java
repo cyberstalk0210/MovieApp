@@ -1,6 +1,9 @@
 package com.example.movieapp.dto;
 
-//TODO nima uchun kerak SignInRequest
-public class SignInRequest {
+import lombok.Data;
 
+@Data
+public class SignInRequest {
+    private String email;
+    private String password;
 }

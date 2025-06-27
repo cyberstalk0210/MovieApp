@@ -1,11 +1,13 @@
+
 package com.example.movieapp.dto;
 
 import lombok.Data;
 
 @Data
-public class SignUpRequest {
+public class AuthResponse {
+    private Long id;
     private String username;
     private String email;
-    private String password;
+    private Boolean subscription;
+    private Long userId;
 }
-
