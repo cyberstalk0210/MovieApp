@@ -18,6 +18,7 @@ import java.util.List;
 public class SeriesController {
     private final SeriesService seriesService;
 
+
     @GetMapping("/")
     public ResponseEntity<List<SeriesDto>> series() {
         return seriesService.findAll();
