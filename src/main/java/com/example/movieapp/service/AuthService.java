@@ -6,6 +6,7 @@ import com.example.movieapp.dto.SignUpRequest;
 import com.example.movieapp.entities.User;
 import com.example.movieapp.mapper.UserMapper;
 import com.example.movieapp.repository.UserRepo;
+import com.example.movieapp.security.JwtTokenProvider;
 import lombok.RequiredArgsConstructor;
 import org.springframework.security.crypto.bcrypt.BCryptPasswordEncoder;
 import org.springframework.stereotype.Service;
@@ -16,6 +17,7 @@ public class AuthService {
 
     private final UserRepo userRepo;
     private final UserMapper userMapper;
+    private final JwtTokenProvider jwtTokenProvider;
     private final BCryptPasswordEncoder passwordEncoder;
 
     public AuthResponse signIn(SignInRequest request) {
@@ -26,13 +28,12 @@ public class AuthService {
         if (!passwordEncoder.matches(request.getPassword(), user.getPassword()))
             throw new RuntimeException("Invalid credentials");
 
-        return userMapper.maptoAuthResponse(user);
+        return userMapper.toAuthResponse(user);
     }
 
     public AuthResponse signUp(SignUpRequest request) {
         if (userRepo.findByEmail(request.getEmail()).isPresent())
             throw new RuntimeException("User already exists");
-
 
         User user = User.builder()
                 .username(request.getUsername())
@@ -42,7 +43,15 @@ public class AuthService {
                 .userId(System.currentTimeMillis())
                 .build();
 
-        return userMapper.maptoAuthResponse(user);
+        String token = jwtTokenProvider.generateToken(user.getEmail());
+
+        userRepo.save(user);
+
+        AuthResponse response = userMapper.toAuthResponse(user);
+        response.setToken(token);
+
+        return response;
     }
+
 
 }

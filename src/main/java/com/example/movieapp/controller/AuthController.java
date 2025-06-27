@@ -20,7 +20,6 @@ public class AuthController {
     private final AuthService authService;
 
     @PostMapping("/sign-in")
-
     public ResponseEntity<AuthResponse> signIn(@RequestBody SignInRequest request){
         AuthResponse authResponse = authService.signIn(request);
         return ResponseEntity.ok(authResponse);
@@ -31,5 +30,4 @@ public class AuthController {
         AuthResponse response = authService.signUp(request);
         return ResponseEntity.status(HttpStatus.CREATED).body(response);
     }
-
 }
