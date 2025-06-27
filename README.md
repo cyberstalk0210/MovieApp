@@ -36,7 +36,7 @@ This is the backend service for a mobile-based movie streaming application. It i
 - JWT (io.jsonwebtoken)
 - MapStruct
 - Hibernate + JPA
-- Maven or Gradle
+- Gradle
 
 ---
 
