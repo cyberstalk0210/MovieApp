@@ -1,12 +1,11 @@
 package com.example.movieapp.dto;
 
 import lombok.Data;
-import java.util.List;
 
 @Data
-public class SeriesDto {
+public class EpisodePartDto {
     private Long id;
-    private String image;
+    private int episodeNumber;
     private String title;
-    private String status;
+    private String thumbnail;
 }
