@@ -21,11 +21,11 @@ public class AuthService {
     private final BCryptPasswordEncoder passwordEncoder;
 
     public AuthResponse signIn(SignInRequest request) {
-        User user = userRepo.findByEmail(request.getEmail())
-                .orElseThrow(() -> new RuntimeException("User not found"));
+            User user = userRepo.findByEmail(request.getEmail())
+                    .orElseThrow(() -> new RuntimeException("User not found"));
 
-        if (!passwordEncoder.matches(request.getPassword(), user.getPassword()))
-            throw new RuntimeException("Invalid credentials");
+            if (!passwordEncoder.matches(request.getPassword(), user.getPassword()))
+                throw new RuntimeException("Invalid credentials");
 
         String token = jwtTokenProvider.generateToken(user.getEmail());
 
@@ -34,7 +34,6 @@ public class AuthService {
 
         return response;
     }
-
 
     public AuthResponse signUp(SignUpRequest request) {
         if (userRepo.findByEmail(request.getEmail()).isPresent())
