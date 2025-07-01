@@ -24,6 +24,8 @@ public class Episode {
 
     private String thumbnail;
 
+    private String fileName;
+
     @ManyToOne
     @JoinColumn(name = "series_id")
     private Series series;

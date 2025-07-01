@@ -4,7 +4,7 @@ import lombok.Data;
 
 @Data
 public class EpisodePartDto {
-    private Long id;
+    private Long episodeId;
     private int episodeNumber;
     private String title;
     private String thumbnail;

@@ -37,20 +37,32 @@ dependencies {
     implementation 'org.springframework.modulith:spring-modulith-starter-core'
     implementation 'org.springframework.modulith:spring-modulith-starter-jpa'
     implementation 'io.jsonwebtoken:jjwt-api:0.11.5'
-    compileOnly 'org.projectlombok:lombok'
     implementation 'org.mapstruct:mapstruct:1.5.5.Final'
+    implementation 'software.amazon.awssdk:s3:2.25.14'
+
+
+
+    // ✅ Lombok
+    compileOnly 'org.projectlombok:lombok'
+    annotationProcessor 'org.projectlombok:lombok'
+
+    // ✅ MapStruct processor
     annotationProcessor 'org.mapstruct:mapstruct-processor:1.5.5.Final'
-//    developmentOnly 'org.springframework.boot:spring-boot-docker-compose'
-    runtimeOnly 'org.postgresql:postgresql'
+
+    // ✅ JWT Impl & Jackson
     runtimeOnly 'io.jsonwebtoken:jjwt-impl:0.11.5'
     runtimeOnly 'io.jsonwebtoken:jjwt-jackson:0.11.5'
-    annotationProcessor 'org.projectlombok:lombok'
+
+    runtimeOnly 'com.h2database:h2'
+    runtimeOnly 'org.postgresql:postgresql'
+
     testImplementation 'org.springframework.boot:spring-boot-starter-test'
     testImplementation 'org.springframework.modulith:spring-modulith-starter-test'
     testImplementation 'org.springframework.restdocs:spring-restdocs-mockmvc'
     testImplementation 'org.springframework.security:spring-security-test'
     testRuntimeOnly 'org.junit.platform:junit-platform-launcher'
 }
+
 
 dependencyManagement {
     imports {

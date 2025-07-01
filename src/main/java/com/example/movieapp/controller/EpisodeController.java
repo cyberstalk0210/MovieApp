@@ -1,11 +1,13 @@
 package com.example.movieapp.controller;
 
 import com.example.movieapp.dto.EpisodeDto;
-import com.example.movieapp.entities.Episode;
 import com.example.movieapp.service.EpisodeService;
 import lombok.RequiredArgsConstructor;
 import org.springframework.http.ResponseEntity;
+import org.springframework.security.access.prepost.PreAuthorize;
 import org.springframework.web.bind.annotation.*;
+
+import java.util.List;
 
 
 @RestController
@@ -20,5 +22,12 @@ public class EpisodeController {
             @PathVariable Long eid
     ) {
         return ResponseEntity.ok(episodeService.getEpisodeById(sid, eid));
+    }
+
+    @GetMapping("/{seriesId}/episodes")
+    @PreAuthorize("hasRole('ADMIN')")
+    public ResponseEntity<List<EpisodeDto>> getEpisodesBySeries(@PathVariable Long seriesId) {
+        List<EpisodeDto> episodes = episodeService.getEpisodesBySeries(seriesId);
+        return ResponseEntity.ok(episodes);
     }
 }

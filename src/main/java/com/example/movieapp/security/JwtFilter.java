@@ -26,23 +26,31 @@ public class JwtFilter extends OncePerRequestFilter {
     protected void doFilterInternal(HttpServletRequest request,
                                     HttpServletResponse response,
                                     FilterChain filterChain) throws ServletException, IOException {
-
         String header = request.getHeader("Authorization");
 
         if (header != null && header.startsWith("Bearer ")) {
             String token = header.substring(7);
-
-            if (!jwtTokenProvider.validateToken(token)) {
-                throw new AuthenticationServiceException("Invalid token");
+            try {
+                if (!jwtTokenProvider.validateToken(token)) {
+                    throw new AuthenticationServiceException("Invalid token");
+                }
+                String email = jwtTokenProvider.getEmailFromToken(token);
+                UsernamePasswordAuthenticationToken auth = new UsernamePasswordAuthenticationToken(
+                        email, null, List.of()
+                );
+                SecurityContextHolder.getContext().setAuthentication(auth);
+            } catch (AuthenticationServiceException e) {
+                SecurityContextHolder.clearContext();
+                response.sendError(HttpServletResponse.SC_UNAUTHORIZED, e.getMessage());
+                return;
             }
-            String email = jwtTokenProvider.getEmailFromToken(token);
-
-            UsernamePasswordAuthenticationToken auth = new UsernamePasswordAuthenticationToken(
-                    email, null, List.of()
-            );
-            SecurityContextHolder.getContext().setAuthentication(auth);
-
         }
         filterChain.doFilter(request, response);
+    }
+
+    @Override
+    protected boolean shouldNotFilter(HttpServletRequest request) {
+        String path = request.getRequestURI();
+        return path.startsWith("/auth/") || path.startsWith("/public/");
     }
 }
