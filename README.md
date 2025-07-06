@@ -1,63 +1,78 @@
-# 🎬 Movie App Backend
+🎬 Movie App Backend
 
-This is the backend service for a mobile-based movie streaming application. It is built with **Spring Boot**, using **JWT authentication**, and provides secure endpoints for user login, signup, series listing, and promotional banners.
+This is the backend service for a mobile-based movie streaming application. Built with Spring Boot, it supports secure content management, JWT-based authentication, and admin-friendly APIs for series and episodes.
+🚀 Features
+✅ User Authentication
 
----
+    Sign Up / Sign In with encrypted passwords (BCrypt)
 
-## 🚀 Features
+    Stateless session via JWT token
 
-- ✅ **User Authentication**
-  - Sign up / Sign in with secure password encryption (BCrypt)
-  - JWT token generation and validation
-  - Stateless authentication via `Authorization: Bearer <token>`
+    Role-based access control (ROLE_USER, ROLE_ADMIN)
 
-- 🎞 **Content Management**
-  - Series listing (title, status, image)
-  - Banner display with linked series (movie inside banner)
-  - Home API returns user + series + banners as one response
+🎞 Content Management
 
-- 🔐 **Security**
-  - Spring Security with custom JWT filter
-  - Restricted access to protected endpoints
-  - Global exception handling
+    Series API: Create, update, list, delete
 
-- 🧩 **Architecture**
-  - DTO/Entity separation using MapStruct
-  - Layered structure: Controller → Service → Repository → DB
-  - Clean, maintainable, scalable design
+    Episode API: Add episode by video URL, manage episode list
 
----
+    Auto-update series' video URL when a new episode is added
 
-## 🛠 Tech Stack
+    Banner API: Promotional content linked to a series
 
-- Java 21
-- Spring Boot
-- Spring Security
-- JWT (io.jsonwebtoken)
-- MapStruct
-- Hibernate + JPA
-- Gradle
+    Home API that returns:
 
----
+        User info
 
-## 📡 API Endpoints
+        List of series
 
-| Method | Endpoint           | Description                |
-|--------|--------------------|----------------------------|
-| POST   | `/auth/sign-up`    | Register a new user        |
-| POST   | `/auth/sign-in`    | Log in and get JWT token   |
-| GET    | `/home?userId=1`   | Get homepage content       |
-| GET    | `/series`          | Get all series (auth req.) |
+        List of banners
 
-> ✅ Token is required for `/home` and `/series` via `Authorization` header.
+☁ Bunny CDN Integration
 
----
+    (Optional) Upload files to BunnyCDN via /admin/bunny/upload endpoint
 
-## 🧪 Testing
+    Store video and thumbnail URLs in the database
 
-You can use **Postman** or any HTTP client to test the API.
+🔐 Security
 
-1. Register or login using `/auth/sign-up` or `/auth/sign-in`
-2. Copy the returned token
-3. Send it with protected endpoints:
+    Spring Security + JWT custom filter
 
+    Protected routes (/admin/**, /series/**, etc.)
+
+    Global exception handling with proper error messages
+
+🧩 Architecture
+
+    DTO/Entity separation using MapStruct
+
+    Layered structure:
+    Controller → Service → Repository → DB
+
+    Clean and scalable project structure
+
+🛠 Tech Stack
+
+    Java 21
+
+    Spring Boot 3
+
+    Spring Security + JWT (jjwt)
+
+    MapStruct
+
+    Hibernate + JPA
+
+    PostgreSQL (optional)
+
+    Gradle
+
+    Docker (optional)
+
+📡 API Endpoints (Sample)
+🔐 Auth
+Method	Endpoint	Description
+POST	/auth/sign-up	Register new user
+POST	/auth/sign-in	Login & receive token
+
+🔑 Token is returned as Authorization: Bearer <token>
