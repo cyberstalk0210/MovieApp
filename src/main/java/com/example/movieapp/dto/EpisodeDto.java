@@ -10,4 +10,5 @@ public class EpisodeDto {
     private String thumbnail;
     private String videoUrl; // <-- Shart!
     private String fileName;
+    private Long seriesId;
 }

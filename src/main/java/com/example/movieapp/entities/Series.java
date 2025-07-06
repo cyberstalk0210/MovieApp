@@ -19,7 +19,7 @@ public class Series {
     @GeneratedValue(strategy = GenerationType.IDENTITY)
     private Long id;
 
-    private String image;
+    private String imagePath;
 
     private String title;
 

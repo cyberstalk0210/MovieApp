@@ -7,7 +7,6 @@ import com.example.movieapp.mapper.EpisodeMapper;
 import com.example.movieapp.repository.EpisodeRepo;
 import com.example.movieapp.repository.SeriesRepo;
 import lombok.RequiredArgsConstructor;
-import org.springframework.http.HttpStatus;
 import org.springframework.http.ResponseEntity;
 import org.springframework.stereotype.Component;
 
@@ -22,10 +21,10 @@ public class EpisodeService {
 
     private final EpisodeRepo episodeRepo;
     private final EpisodeMapper episodeMapper;
-    private final WasabiService wasabiService;
     private final SeriesRepo seriesRepo;
 
     public EpisodeDto getEpisodeById(Long seriesId, Long episodeId) {
+
         Episode episode = episodeRepo.findById(episodeId)
                 .orElseThrow(() -> new RuntimeException("Episode not found"));
 
@@ -33,38 +32,44 @@ public class EpisodeService {
             throw new RuntimeException("Episode does not belong to this series");
         }
 
-        EpisodeDto dto = episodeMapper.toEpisodeDto(episode);
-
-        // ✅ videoUrl qo‘shiladi
-        dto.setVideoUrl(wasabiService.generateFileUrl(episode.getFileName()));
-
-        return dto;
+        return episodeMapper.toEpisodeDto(episode);
     }
-    public ResponseEntity<Map<String, Object>> addEpisode(Long seriesId, EpisodeDto dto) {
+    public EpisodeDto addEpisode(Long seriesId, EpisodeDto dto) {
         Series series = seriesRepo.findById(seriesId)
                 .orElseThrow(() -> new RuntimeException("Series not found"));
 
         Episode episode = Episode.builder()
                 .title(dto.getTitle())
                 .episodeNumber(dto.getEpisodeNumber())
-                .thumbnail(dto.getThumbnail())
+                .thumbnail(series.getImagePath())
                 .fileName(dto.getFileName())
+                .videoUrl(dto.getVideoUrl())
                 .series(series)
                 .build();
 
         episodeRepo.save(episode);
 
-        return ResponseEntity.status(HttpStatus.CREATED)
-                .body(Map.of("message", "Episode added", "id", episode.getId()));
+        seriesRepo.save(series);
+
+        return episodeMapper.toEpisodeDto(episode);
     }
+
 
     public ResponseEntity<Map<String, Object>> updateEpisode(Long episodeId, EpisodeDto dto) {
         return episodeRepo.findById(episodeId)
                 .map(episode -> {
                     episode.setTitle(dto.getTitle());
                     episode.setEpisodeNumber(dto.getEpisodeNumber());
-                    episode.setThumbnail(dto.getThumbnail());
-                    episode.setFileName(dto.getFileName());
+
+                    if (dto.getThumbnail() != null) {
+                        episode.setThumbnail(dto.getThumbnail());
+                    }
+
+                    if (dto.getFileName() != null) {
+                        episode.setFileName(dto.getFileName());
+                        episode.setVideoUrl(dto.getVideoUrl());
+                    }
+
                     episodeRepo.save(episode);
                     Map<String, Object> response = new HashMap<>();
                     response.put("message", "Episode updated");
@@ -73,6 +78,7 @@ public class EpisodeService {
                 })
                 .orElse(ResponseEntity.notFound().build());
     }
+
 
     public ResponseEntity<Map<String, String>> deleteEpisode(Long episodeId) {
         return episodeRepo.findById(episodeId)
@@ -88,6 +94,5 @@ public class EpisodeService {
                 .map(episodeMapper::toEpisodeDto)
                 .toList();
     }
-
 
 }

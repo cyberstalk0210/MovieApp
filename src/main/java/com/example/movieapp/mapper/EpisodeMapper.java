@@ -17,4 +17,6 @@ public interface EpisodeMapper {
     EpisodePartDto toPartDto(Episode episode);
 
     List<EpisodePartDto> toPartDtoList(List<Episode> episodes);
+
+    Episode toEpisodeEntity(EpisodeDto episodeDto);
 }

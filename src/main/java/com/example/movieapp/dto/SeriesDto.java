@@ -10,11 +10,15 @@ public class SeriesDto {
     private Long id;
 
     @NotBlank
-    private String image;
-
-    @NotBlank
     private String title;
 
     @NotBlank
     private String status;
+
+    @NotBlank
+    private String VideoUrl;
+
+    @NotBlank
+    private String imagePath;
+
 }

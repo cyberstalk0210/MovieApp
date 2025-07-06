@@ -1,9 +1,18 @@
+version: '3.1'
+
 services:
   postgres:
-    image: 'postgres:latest'
+    image: postgres:latest
+    container_name: movie_postgres
+    restart: always
     environment:
-      - 'POSTGRES_DB=Movies'
-      - 'POSTGRES_PASSWORD=root123'
-      - 'POSTGRES_USER=postgres'
+      POSTGRES_DB: Movies
+      POSTGRES_USER: postgres
+      POSTGRES_PASSWORD: root123
     ports:
-      - '5432'
+      - "5432:5432"
+    volumes:
+      - pgdata:/var/lib/postgresql/data
+
+volumes:
+  pgdata:

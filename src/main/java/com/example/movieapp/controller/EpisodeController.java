@@ -4,7 +4,6 @@ import com.example.movieapp.dto.EpisodeDto;
 import com.example.movieapp.service.EpisodeService;
 import lombok.RequiredArgsConstructor;
 import org.springframework.http.ResponseEntity;
-import org.springframework.security.access.prepost.PreAuthorize;
 import org.springframework.web.bind.annotation.*;
 
 import java.util.List;
@@ -25,7 +24,6 @@ public class EpisodeController {
     }
 
     @GetMapping("/{seriesId}/episodes")
-    @PreAuthorize("hasRole('ADMIN')")
     public ResponseEntity<List<EpisodeDto>> getEpisodesBySeries(@PathVariable Long seriesId) {
         List<EpisodeDto> episodes = episodeService.getEpisodesBySeries(seriesId);
         return ResponseEntity.ok(episodes);
