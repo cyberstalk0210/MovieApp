@@ -36,16 +36,19 @@ public class HomeService {
 
         List<BannerDto> bannerDtos = bannerRepo.findAll().stream()
                 .map(banner -> {
-                    BannerDto dto = new BannerDto();
-                    dto.setImage(banner.getImage());
-                    dto.setMovie(seriesMapper.toDto(banner.getSeries()));
-                    return dto;
+                    Series series = banner.getSeries();
+                    SeriesDto movie = (series != null) ? seriesMapper.toDto(series) : null;
+
+                    return BannerDto.builder()
+                            .image(banner.getImage())
+                            .movie(movie)
+                            .build();
                 }).toList();
 
         return HomeResponse.builder()
-                        .user(userMapper.toUserDto(user))
-                                .series(seriesList)
-                                        .banners(bannerDtos)
+                .user(userMapper.toUserDto(user))
+                .series(seriesList)
+                .banners(bannerDtos)
                 .build();
     }
 }

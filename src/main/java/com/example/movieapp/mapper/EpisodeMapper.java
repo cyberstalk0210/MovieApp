@@ -11,6 +11,7 @@ import java.util.List;
 @Mapper(componentModel = "spring")
 public interface EpisodeMapper {
 
+    @Mapping(source = "series.id", target = "seriesId")
     EpisodeDto toEpisodeDto(Episode episode);
 
     @Mapping(source = "id", target = "episodeId")
@@ -18,5 +19,7 @@ public interface EpisodeMapper {
 
     List<EpisodePartDto> toPartDtoList(List<Episode> episodes);
 
+    @Mapping(source = "seriesId", target = "series.id")
     Episode toEpisodeEntity(EpisodeDto episodeDto);
 }
+

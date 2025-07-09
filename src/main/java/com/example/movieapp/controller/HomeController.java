@@ -20,7 +20,9 @@ public class HomeController {
     @GetMapping("/home")
     public ResponseEntity<HomeResponse> home(Authentication authentication) {
         String email = authentication.getName();
+
         User user = userRepo.findByEmail(email).orElseThrow();
+
         return ResponseEntity.ok(homeService.getHomeData(user.getId()));
     }
 }

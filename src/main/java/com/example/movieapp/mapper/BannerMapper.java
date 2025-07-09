@@ -6,9 +6,12 @@ import com.example.movieapp.dto.UserDto;
 import com.example.movieapp.entities.Banner;
 import com.example.movieapp.entities.User;
 import org.mapstruct.Mapper;
+import org.mapstruct.Mapping;
 
-@Mapper(componentModel = "spring")
+@Mapper(componentModel = "spring", uses = SeriesMapper.class)
 public interface BannerMapper {
 
+    @Mapping(source = "movie", target = "series", qualifiedByName = "seriesDtoToEntityById")
     Banner toBanner(BannerDto bannerDto);
 }
+

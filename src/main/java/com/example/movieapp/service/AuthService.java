@@ -11,6 +11,8 @@ import lombok.RequiredArgsConstructor;
 import org.springframework.security.crypto.bcrypt.BCryptPasswordEncoder;
 import org.springframework.stereotype.Service;
 
+import java.util.Random;
+
 @Service
 @RequiredArgsConstructor
 public class AuthService {
@@ -39,22 +41,37 @@ public class AuthService {
         if (userRepo.findByEmail(request.getEmail()).isPresent())
             throw new RuntimeException("User already exists");
 
+        Long userId = generateUniqueUserId();
+
         User user = User.builder()
                 .username(request.getUsername())
                 .email(request.getEmail())
                 .password(passwordEncoder.encode(request.getPassword()))
                 .subscription(false)
-                .userId(System.currentTimeMillis())
+                .userId(userId)
                 .build();
 
-        String token = jwtTokenProvider.generateToken(user.getEmail());
-
         userRepo.save(user);
+
+        String token = jwtTokenProvider.generateToken(user.getEmail());
 
         AuthResponse response = userMapper.toAuthResponse(user);
         response.setToken(token);
 
         return response;
     }
+
+
+    public Long generateUniqueUserId() {
+        Random random = new Random();
+        Long userId;
+        do {
+            int number = 100000 + random.nextInt(900000);
+            userId = (long) number;
+        } while (userRepo.existsByUserId(userId));
+
+        return userId;
+    }
+
 
 }

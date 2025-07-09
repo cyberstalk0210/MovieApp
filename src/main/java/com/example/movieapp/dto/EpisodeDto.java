@@ -8,7 +8,7 @@ public class EpisodeDto {
     private String title;
     private Integer episodeNumber;
     private String thumbnail;
-    private String videoUrl; // <-- Shart!
+    private String videoUrl;
     private String fileName;
     private Long seriesId;
 }

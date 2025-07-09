@@ -12,7 +12,7 @@ import java.nio.file.Paths;
 @Service
 public class FileStorageService {
 
-    private final String uploadDir = "/home/stalker/IdeaProjects/MovieApp/uploads/";
+    private final String uploadDir = "/var/www/myapp/backend/uploads/";
 
     public String saveImage(MultipartFile file) {
         try {

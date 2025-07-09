@@ -3,6 +3,7 @@ package com.example.movieapp.service;
 import com.example.movieapp.dto.BannerDto;
 import com.example.movieapp.dto.GetDetailsResponse;
 import com.example.movieapp.dto.SeriesDto;
+import com.example.movieapp.entities.Banner;
 import com.example.movieapp.entities.Episode;
 import com.example.movieapp.entities.Series;
 import com.example.movieapp.mapper.BannerMapper;
@@ -72,20 +73,17 @@ public class SeriesService {
 
         Series saved = seriesRepo.save(series);
 
-        BannerDto bannerDto = new BannerDto();
+        Banner banner = new Banner();
+        banner.setImage(seriesDto.getImagePath());
+        banner.setSeries(saved);
 
-        bannerDto.setImage(seriesDto.getImagePath());
-
-        bannerDto.setMovie(seriesDto);
-
-        bannerRepo.save(bannerMapper.toBanner(bannerDto));
+        bannerRepo.save(banner);
 
 
         return ResponseEntity.status(HttpStatus.CREATED).body(
                 Map.of("message", "Series saved successfully", "id", saved.getId())
         );
     }
-
 
     public ResponseEntity<Map<String, Object>> updateSeries(Long seriesId, SeriesDto seriesDto) {
         return seriesRepo.findById(seriesId)

@@ -50,7 +50,6 @@ public class AdminEpisodeController {
     }
 
     @PostMapping("/add-series")
-    @PreAuthorize("hasRole('ADMIN')")
     public ResponseEntity<Map<String, Object>> addSeries(@RequestBody SeriesDto seriesDto) {
         return seriesService.saveSeries(seriesDto);
     }

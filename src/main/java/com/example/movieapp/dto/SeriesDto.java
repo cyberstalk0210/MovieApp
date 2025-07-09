@@ -16,9 +16,6 @@ public class SeriesDto {
     private String status;
 
     @NotBlank
-    private String VideoUrl;
-
-    @NotBlank
     private String imagePath;
 
 }
