@@ -8,14 +8,14 @@ import com.example.movieapp.repository.EpisodeRepo;
 import com.example.movieapp.repository.SeriesRepo;
 import lombok.RequiredArgsConstructor;
 import org.springframework.http.ResponseEntity;
-import org.springframework.stereotype.Component;
+import org.springframework.stereotype.Service;
 
 import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
 
 
-@Component
+@Service
 @RequiredArgsConstructor
 public class EpisodeService {
 
@@ -24,6 +24,8 @@ public class EpisodeService {
     private final SeriesRepo seriesRepo;
 
     public EpisodeDto getEpisodeById(Long seriesId, Long episodeId) {
+
+
 
         Episode episode = episodeRepo.findById(episodeId)
                 .orElseThrow(() -> new RuntimeException("Episode not found"));
@@ -34,24 +36,21 @@ public class EpisodeService {
 
         return episodeMapper.toEpisodeDto(episode);
     }
-    public EpisodeDto addEpisode(Long seriesId, EpisodeDto dto) {
+
+    public Episode addEpisode(Long seriesId, EpisodeDto dto) {
         Series series = seriesRepo.findById(seriesId)
                 .orElseThrow(() -> new RuntimeException("Series not found"));
 
         Episode episode = Episode.builder()
                 .title(dto.getTitle())
                 .episodeNumber(dto.getEpisodeNumber())
-                .thumbnail(series.getImagePath())
+                .thumbnail(dto.getThumbnail())
                 .fileName(dto.getFileName())
                 .videoUrl(dto.getVideoUrl())
                 .series(series)
                 .build();
 
-        episodeRepo.save(episode);
-
-        seriesRepo.save(series);
-
-        return episodeMapper.toEpisodeDto(episode);
+        return episodeRepo.save(episode);
     }
 
 
@@ -67,6 +66,8 @@ public class EpisodeService {
 
                     if (dto.getFileName() != null) {
                         episode.setFileName(dto.getFileName());
+                    }
+                    if (dto.getVideoUrl() != null) {
                         episode.setVideoUrl(dto.getVideoUrl());
                     }
 
@@ -90,6 +91,7 @@ public class EpisodeService {
 
     public List<EpisodeDto> getEpisodesBySeries(Long seriesId) {
         List<Episode> episodes = episodeRepo.findBySeriesId(seriesId);
+
         return episodes.stream()
                 .map(episodeMapper::toEpisodeDto)
                 .toList();

@@ -15,13 +15,12 @@ public class UserController {
 
     private final UserService userService;
 
-    // Get all users
+
     @GetMapping
     public ResponseEntity<List<UserDto>> getAllUsers() {
         return userService.getAllUsers();
     }
 
-    // Update a user by ID
     @PutMapping("/{id}")
     public ResponseEntity<UserDto> updateUser(@PathVariable Long id, @RequestBody UserDto userDto) {
         return userService.updateUser(id, userDto);

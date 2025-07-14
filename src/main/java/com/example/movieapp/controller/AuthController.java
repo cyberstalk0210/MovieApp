@@ -1,9 +1,9 @@
 package com.example.movieapp.controller;
 
-import com.example.movieapp.dto.AuthResponse;
-import com.example.movieapp.dto.SignInRequest;
-import com.example.movieapp.dto.SignUpRequest;
+import com.example.movieapp.dto.*;
+import com.example.movieapp.security.JwtTokenProvider;
 import com.example.movieapp.service.AuthService;
+import com.example.movieapp.service.RefreshTokenService;
 import jakarta.validation.Valid;
 import lombok.RequiredArgsConstructor;
 import org.springframework.http.HttpStatus;
@@ -19,7 +19,8 @@ import org.springframework.web.bind.annotation.RestController;
 public class AuthController {
 
     private final AuthService authService;
-
+    private final JwtTokenProvider jwtTokenProvider;
+    private final RefreshTokenService refreshTokenService;
     @PostMapping("/sign-in")
     public ResponseEntity<AuthResponse> signIn(@Valid @RequestBody SignInRequest request){
         AuthResponse authResponse = authService.signIn(request);
@@ -31,4 +32,30 @@ public class AuthController {
         AuthResponse response = authService.signUp(request);
         return ResponseEntity.status(HttpStatus.CREATED).body(response);
     }
+
+    @PostMapping("/refresh")
+    public ResponseEntity<?> refresh(@RequestBody RefreshRequest request) {
+        try {
+            refreshTokenService.validateRefreshToken(request.getRefreshToken());
+            String email = refreshTokenService.getEmailFromToken(request.getRefreshToken());
+
+            String newAccessToken = jwtTokenProvider.generateAccessToken(email);
+            String newRefreshToken = refreshTokenService.createRefreshToken(email).getToken(); // eski refresh token o‘rniga yangisi
+
+            AuthResponse response = new AuthResponse();
+            response.setToken(newAccessToken);
+            response.setRefreshToken(newRefreshToken);
+
+            return ResponseEntity.ok(response);
+        } catch (RuntimeException e) {
+            return ResponseEntity.status(HttpStatus.UNAUTHORIZED).body(e.getMessage());
+        }
+    }
+
+    @PostMapping("/logout")
+    public ResponseEntity<?> logout(@RequestBody LogoutRequest request) {
+        authService.logout(request.getEmail());
+        return ResponseEntity.ok("User logged out successfully");
+    }
+
 }

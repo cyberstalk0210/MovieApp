@@ -37,7 +37,7 @@ public class SeriesController {
     public ResponseEntity<?> createSeries(@RequestParam("title") String title,
                                           @RequestParam("status") String status,
                                           @RequestParam("image") MultipartFile image) {
-        String imagePath = fileStorageService.saveImage(image);
+        String imagePath = fileStorageService.saveImage("series", image); // << faqat series uchun
 
         SeriesDto dto = new SeriesDto();
         dto.setTitle(title);

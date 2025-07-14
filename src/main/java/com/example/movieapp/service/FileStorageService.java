@@ -11,12 +11,11 @@ import java.nio.file.Paths;
 
 @Service
 public class FileStorageService {
+    private final String uploadRootDir = "/home/stalker/IdeaProjects/MovieApp/uploads";
 
-    private final String uploadDir = "/var/www/myapp/backend/uploads/";
-
-    public String saveImage(MultipartFile file) {
+    public String saveImage(String type, MultipartFile file) {
         try {
-            Path uploadPath = Paths.get(uploadDir);
+            Path uploadPath = Paths.get(uploadRootDir, type);
             if (!Files.exists(uploadPath)) {
                 Files.createDirectories(uploadPath);
             }
@@ -25,9 +24,10 @@ public class FileStorageService {
             Path filePath = uploadPath.resolve(filename);
             file.transferTo(filePath.toFile());
 
-            return uploadDir + filename;
+            return "/uploads/" + type + "/" + filename;
         } catch (IOException e) {
-            throw new RuntimeException("Rasmni saqlab bo‘lmadi", e);
+            throw new RuntimeException("Rasmni saqlab bo‘lmadi: " + e.getMessage(), e);
         }
     }
 }
+

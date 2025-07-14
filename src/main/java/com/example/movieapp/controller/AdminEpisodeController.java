@@ -5,12 +5,15 @@ import com.example.movieapp.dto.SeriesDto;
 import com.example.movieapp.entities.Episode;
 import com.example.movieapp.mapper.EpisodeMapper;
 import com.example.movieapp.service.EpisodeService;
+import com.example.movieapp.service.FileStorageService;
 import com.example.movieapp.service.SeriesService;
 import lombok.RequiredArgsConstructor;
 import org.springframework.http.ResponseEntity;
 import org.springframework.security.access.prepost.PreAuthorize;
 import org.springframework.web.bind.annotation.*;
+import org.springframework.web.multipart.MultipartFile;
 
+import java.nio.file.Paths;
 import java.util.List;
 import java.util.Map;
 
@@ -22,6 +25,7 @@ public class AdminEpisodeController {
     private final EpisodeService episodeService;
     private final EpisodeMapper episodeMapper;
     private final SeriesService seriesService;
+    private final FileStorageService fileStorageService;
 
 
     @GetMapping("/{seriesId}/episodes")
@@ -31,29 +35,53 @@ public class AdminEpisodeController {
     }
 
     @PostMapping("/{seriesId}/episodes")
-    @PreAuthorize("hasRole('ADMIN')")
-    public ResponseEntity<EpisodeDto> addEpisodeToSeries(@PathVariable Long seriesId, @RequestBody EpisodeDto episodeDto) {
+//    @PreAuthorize("hasRole('ADMIN')")
+    public ResponseEntity<?> addEpisodeToSeries(
+            @PathVariable Long seriesId,
+            @RequestParam("title") String title,
+            @RequestParam("videoUrl") String videoUrl,
+            @RequestParam("episodeNumber") Integer episodeNumber,
+            @RequestParam("image") MultipartFile image
+    ) {
+        // Simple validation
+        if (title == null || title.isBlank() || videoUrl == null || videoUrl.isBlank() || image.isEmpty()) {
+            return ResponseEntity.badRequest().body("Missing required fields");
+        }
+
+        // Save image
+        String imagePath = fileStorageService.saveImage("episodes", image);
+        String savedFileName = Paths.get(imagePath).getFileName().toString();
+
+        // Create DTO
+        EpisodeDto episodeDto = new EpisodeDto();
         episodeDto.setSeriesId(seriesId);
-        Episode episodeEntity = episodeMapper.toEpisodeEntity(episodeDto);
-        episodeService.addEpisode(seriesId, episodeDto);
-        return ResponseEntity.ok(episodeMapper.toEpisodeDto(episodeEntity));
+        episodeDto.setTitle(title);
+        episodeDto.setEpisodeNumber(episodeNumber);
+        episodeDto.setThumbnail(imagePath);
+        episodeDto.setVideoUrl(videoUrl);
+        episodeDto.setFileName(title);
+
+        // Save and return
+        Episode saved = episodeService.addEpisode(seriesId, episodeDto);
+        return ResponseEntity.ok(episodeMapper.toEpisodeDto(saved));
     }
 
-    @PostMapping("/add-episode")
-    public ResponseEntity<EpisodeDto> addEpisode(@RequestBody EpisodeDto episodeDto) {
 
-        Episode episodeEntity = episodeMapper.toEpisodeEntity(episodeDto);
 
-        episodeService.addEpisode(episodeDto.getSeriesId(),episodeDto);
-
-        return ResponseEntity.ok(episodeMapper.toEpisodeDto(episodeEntity));
-    }
+//    @PostMapping("/add-episode")
+//    public ResponseEntity<EpisodeDto> addEpisode(@RequestBody EpisodeDto episodeDto) {
+//
+//        Episode episodeEntity = episodeMapper.toEpisodeEntity(episodeDto);
+//
+//        episodeService.addEpisode(episodeDto.getSeriesId(),episodeDto);
+//
+//        return ResponseEntity.ok(episodeMapper.toEpisodeDto(episodeEntity));
+//    }
 
     @PostMapping("/add-series")
     public ResponseEntity<Map<String, Object>> addSeries(@RequestBody SeriesDto seriesDto) {
         return seriesService.saveSeries(seriesDto);
     }
-
 
     @PutMapping("/episodes/{episodeId}")
     public ResponseEntity<?> updateEpisode(@PathVariable Long episodeId, @RequestBody EpisodeDto dto) {
