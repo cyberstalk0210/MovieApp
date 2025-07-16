@@ -11,7 +11,7 @@ import java.nio.file.Paths;
 
 @Service
 public class FileStorageService {
-    private final String uploadRootDir = "var/www/myapp/backend/uploads";
+    private final String uploadRootDir = "/uploads";
 
     public String saveImage(String type, MultipartFile file) {
         try {

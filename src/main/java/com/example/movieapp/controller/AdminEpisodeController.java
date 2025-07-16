@@ -78,10 +78,10 @@ public class AdminEpisodeController {
 //        return ResponseEntity.ok(episodeMapper.toEpisodeDto(episodeEntity));
 //    }
 
-    @PostMapping("/add-series")
-    public ResponseEntity<Map<String, Object>> addSeries(@RequestBody SeriesDto seriesDto) {
-        return seriesService.saveSeries(seriesDto);
-    }
+//    @PostMapping("/add-series")
+//    public ResponseEntity<Map<String, Object>> addSeries(@RequestBody SeriesDto seriesDto) {
+//        return seriesService.saveSeries(seriesDto);
+//    }
 
     @PutMapping("/episodes/{episodeId}")
     public ResponseEntity<?> updateEpisode(@PathVariable Long episodeId, @RequestBody EpisodeDto dto) {
