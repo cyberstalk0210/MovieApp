@@ -1,5 +1,7 @@
 package com.example.movieapp.service;
 
+import jakarta.validation.Valid;
+import org.springframework.beans.factory.annotation.Value;
 import org.springframework.stereotype.Service;
 import org.springframework.web.multipart.MultipartFile;
 
@@ -11,7 +13,9 @@ import java.nio.file.Paths;
 
 @Service
 public class FileStorageService {
-    private final String uploadRootDir = "/uploads";
+
+    @Value("${app.upload.dir}")
+    private String uploadRootDir;
 
     public String saveImage(String type, MultipartFile file) {
         try {
