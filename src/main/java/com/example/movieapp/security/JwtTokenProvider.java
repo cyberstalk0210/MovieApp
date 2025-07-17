@@ -12,7 +12,6 @@ public class JwtTokenProvider {
     private final SecretKey secretKey = Keys.secretKeyFor(SignatureAlgorithm.HS256);
 
     private final long accessTokenValidity = 30L * 24 * 3600_000;
-    private final long refreshTokenValidity = 60L * 24 * 3600_000; // 7 kun
 
     public String generateToken(String email,long validityMillis) {
         Date now = new Date();
@@ -29,11 +28,6 @@ public class JwtTokenProvider {
     public String generateAccessToken(String email) {
         return generateToken(email, accessTokenValidity);
     }
-
-    public String generateRefreshToken(String email) {
-        return generateToken(email, refreshTokenValidity);
-    }
-
 
     public String getEmailFromToken(String token) {
         return Jwts.parserBuilder()

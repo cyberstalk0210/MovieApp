@@ -5,8 +5,10 @@ import com.example.movieapp.dto.SignInRequest;
 import com.example.movieapp.dto.SignUpRequest;
 import com.example.movieapp.entities.RefreshToken;
 import com.example.movieapp.entities.User;
+import com.example.movieapp.entities.UserDevice;
 import com.example.movieapp.mapper.UserMapper;
 import com.example.movieapp.repository.RefreshTokenRepository;
+import com.example.movieapp.repository.UserDeviceRepository;
 import com.example.movieapp.repository.UserRepo;
 import com.example.movieapp.security.JwtTokenProvider;
 import lombok.RequiredArgsConstructor;
@@ -14,6 +16,7 @@ import org.springframework.security.crypto.bcrypt.BCryptPasswordEncoder;
 import org.springframework.stereotype.Service;
 
 import java.time.Instant;
+import java.time.LocalDateTime;
 import java.util.Optional;
 import java.util.Random;
 
@@ -27,6 +30,7 @@ public class AuthService {
     private final RefreshTokenService refreshTokenService;
     private final BCryptPasswordEncoder passwordEncoder;
     private final RefreshTokenRepository refreshTokenRepository;
+    private final UserDeviceRepository userDeviceRepository;
 
     public AuthResponse signIn(SignInRequest request) {
         User user = userRepo.findByEmail(request.getEmail())
@@ -46,7 +50,25 @@ public class AuthService {
             refreshToken = refreshTokenService.createRefreshToken(user.getEmail()).getToken();
         }
 
+        Optional<UserDevice> existingDevice = userDeviceRepository.findByUserId((user.getId()));
+
+        if (existingDevice.isPresent()) {
+            UserDevice device = existingDevice.get();
+            device.setToken(accessToken);
+            device.setDeviceId(request.getDeviceId());
+            device.setCreatedAt(Instant.now());
+            userDeviceRepository.save(device);
+        } else {
+            UserDevice newDevice = new UserDevice();
+            newDevice.setUser(user);
+            newDevice.setToken(accessToken);
+            newDevice.setDeviceId(request.getDeviceId());
+            newDevice.setCreatedAt(Instant.now());
+            userDeviceRepository.save(newDevice);
+        }
+
         AuthResponse response = userMapper.toAuthResponse(user);
+        response.setDeviceId(request.getDeviceId());
         response.setToken(accessToken);
         response.setRefreshToken(refreshToken);
 

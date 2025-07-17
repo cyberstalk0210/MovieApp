@@ -15,4 +15,5 @@ public class AuthResponse {
     private Long userId;
     private String token; // access token
     private String refreshToken;
+    private String deviceId;
 }

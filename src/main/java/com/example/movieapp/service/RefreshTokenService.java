@@ -19,8 +19,9 @@ public class RefreshTokenService {
     private final RefreshTokenRepository refreshTokenRepository;
     private final UserRepo userRepo;
 
-    private final long refreshTokenDurationMs = 7 * 24 * 3600_000L; // 7 kun
+    private final long refreshTokenDurationMs = 60L * 24 * 3600_000L; // 30 kun
 
+    @Transactional
     public RefreshToken createRefreshToken(String email) {
         User user = userRepo.findByEmail(email).orElseThrow();
 
@@ -39,12 +40,12 @@ public class RefreshTokenService {
         RefreshToken refreshToken = refreshTokenRepository.findByToken(token)
                 .orElseThrow(() -> new RuntimeException("Refresh token not found"));
 
-        if (refreshToken.getExpiryDate().isBefore(Instant.now())) {
-            refreshTokenRepository.delete(refreshToken);
+    if (refreshToken.getExpiryDate().isBefore(Instant.now())) {
             throw new RuntimeException("Refresh token expired");
         }
 
     }
+
     @Transactional
     public void deleteByUser(User user) {
         refreshTokenRepository.deleteByUser(user);
