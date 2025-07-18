@@ -9,6 +9,7 @@ import java.nio.file.Paths;
 
 @Service
 public class DiskStorageService implements StorageService {
+
     private final Path root = Paths.get("/home/stalker/uploads");
     
     @Override

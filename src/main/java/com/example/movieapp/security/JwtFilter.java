@@ -16,7 +16,6 @@ import org.springframework.web.filter.OncePerRequestFilter;
 
 import java.io.IOException;
 import java.util.List;
-import java.util.Optional;
 
 @Component
 public class JwtFilter extends OncePerRequestFilter {
@@ -37,35 +36,33 @@ public class JwtFilter extends OncePerRequestFilter {
                                     FilterChain filterChain) throws ServletException, IOException {
 
         String authHeader = request.getHeader("Authorization");
-        String deviceId = request.getHeader("X-Device-Id");
+        String deviceId = request.getHeader("X  -Device-Id");
 
         if (authHeader != null && authHeader.startsWith("Bearer ")) {
             String token = authHeader.substring(7);
 
             try {
-                // 1. Token validatsiyasi
                 if (!jwtTokenProvider.validateToken(token)) {
                     throw new AuthenticationServiceException("Token noto‘g‘ri yoki muddati tugagan");
                 }
 
-                // 2. Email orqali foydalanuvchini topish
                 String email = jwtTokenProvider.getEmailFromToken(token);
                 User user = userRepo.findByEmail(email)
                         .orElseThrow(() -> new AuthenticationServiceException("Foydalanuvchi topilmadi"));
 
-                // 3. UserDevice tekshiruvi
                 UserDevice device = userDeviceRepository.findByUser(user)
-                        .orElseThrow(() -> new AuthenticationServiceException("Ushbu foydalanuvchiga device biriktirilmagan"));
+                        .orElseThrow(() -> new RuntimeException("Ushbu foydalanuvchiga device biriktirilmagan"));
 
                 if (!device.getToken().equals(token)) {
                     throw new AuthenticationServiceException("Token mos emas");
                 }
 
                 if (device.getDeviceId() == null || !device.getDeviceId().equals(deviceId)) {
+                    System.out.println(deviceId);
+                    System.out.println(device.getDeviceId());
                     throw new AuthenticationServiceException("Device ID mos emas yoki yo‘q");
                 }
 
-                // 4. Auth kontekstga o‘rnatish
                 UsernamePasswordAuthenticationToken authentication =
                         new UsernamePasswordAuthenticationToken(email, null, List.of());
                 SecurityContextHolder.getContext().setAuthentication(authentication);
@@ -76,7 +73,6 @@ public class JwtFilter extends OncePerRequestFilter {
                 return;
             }
         }
-
         filterChain.doFilter(request, response);
     }
 

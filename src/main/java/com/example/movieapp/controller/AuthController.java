@@ -1,9 +1,16 @@
 package com.example.movieapp.controller;
 
 import com.example.movieapp.dto.*;
+import com.example.movieapp.entities.User;
+import com.example.movieapp.repository.UserRepo;
 import com.example.movieapp.security.JwtTokenProvider;
 import com.example.movieapp.service.AuthService;
 import com.example.movieapp.service.RefreshTokenService;
+import com.google.api.client.googleapis.auth.oauth2.GoogleIdToken;
+import com.google.api.client.googleapis.auth.oauth2.GoogleIdTokenVerifier;
+import com.google.api.client.googleapis.javanet.GoogleNetHttpTransport;
+import com.google.api.client.json.jackson2.JacksonFactory;
+import org.springframework.beans.factory.annotation.Value;
 import jakarta.validation.Valid;
 import lombok.RequiredArgsConstructor;
 import org.springframework.http.HttpStatus;
@@ -13,6 +20,9 @@ import org.springframework.web.bind.annotation.RequestBody;
 import org.springframework.web.bind.annotation.RequestMapping;
 import org.springframework.web.bind.annotation.RestController;
 
+import java.util.Collections;
+import java.util.Map;
+
 @RestController
 @RequiredArgsConstructor
 @RequestMapping("/auth")
@@ -21,6 +31,9 @@ public class AuthController {
     private final AuthService authService;
     private final JwtTokenProvider jwtTokenProvider;
     private final RefreshTokenService refreshTokenService;
+    private final UserRepo userRepo;
+
+
     @PostMapping("/sign-in")
     public ResponseEntity<AuthResponse> signIn(@Valid @RequestBody SignInRequest request){
         AuthResponse authResponse = authService.signIn(request);
@@ -56,6 +69,12 @@ public class AuthController {
     public ResponseEntity<?> logout(@RequestBody LogoutRequest request) {
         authService.logout(request.getEmail());
         return ResponseEntity.ok("User logged out successfully");
+    }
+
+    @PostMapping("/google")
+    public ResponseEntity<?> googleLogin(@RequestBody GoogleLoginRequest request) {
+        GoogleIdToken idToken = authService.verifyGoogleToken(request.getCredential());
+        return authService.getAuthResponseResponseEntity(idToken, request.getDeviceId());
     }
 
 }

@@ -5,6 +5,8 @@ import jakarta.validation.constraints.Email;
 import jakarta.validation.constraints.Pattern;
 import lombok.*;
 
+import java.time.LocalDate;
+
 @Getter
 @Setter
 @Entity
@@ -25,6 +27,9 @@ public class User {
 
     private Boolean subscription;
 
+    @Column(name = "subscription_start_date")
+    private LocalDate subscriptionStartDate;
+
     @Pattern(
             regexp = "^(?=.*[0-9])(?=.*[a-z])(?=.*[A-Z])(?=.*[@#$%^&+=!])(?=\\S+$).{8,}$",
             message = "Password must be at least 8 characters long, include uppercase, lowercase, digit and special character"
@@ -34,3 +39,4 @@ public class User {
     @Column(unique = true)
     private Long userId;
 }
+

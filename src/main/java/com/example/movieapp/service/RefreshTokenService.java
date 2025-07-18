@@ -13,13 +13,12 @@ import java.util.UUID;
 
 @Service
 @RequiredArgsConstructor
-
 public class RefreshTokenService {
 
     private final RefreshTokenRepository refreshTokenRepository;
     private final UserRepo userRepo;
 
-    private final long refreshTokenDurationMs = 60L * 24 * 3600_000L; // 30 kun
+    private final long refreshTokenDurationMs = 60L * 24 * 3600_000L; // 60 kun
 
     @Transactional
     public RefreshToken createRefreshToken(String email) {

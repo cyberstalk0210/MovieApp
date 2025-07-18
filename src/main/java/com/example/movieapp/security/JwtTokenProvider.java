@@ -2,6 +2,8 @@ package com.example.movieapp.security;
 
 import javax.crypto.SecretKey;
 import java.util.Date;
+
+import com.example.movieapp.entities.User;
 import io.jsonwebtoken.*;
 import io.jsonwebtoken.security.Keys;
 import org.springframework.stereotype.Component;
@@ -48,6 +50,10 @@ public class JwtTokenProvider {
         } catch (JwtException | IllegalArgumentException e) {
             return false;
         }
+    }
+
+    public String generateToken(User user) {
+        return generateAccessToken(user.getEmail());
     }
 
 }

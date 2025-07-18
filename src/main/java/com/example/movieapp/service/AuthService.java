@@ -11,12 +11,21 @@ import com.example.movieapp.repository.RefreshTokenRepository;
 import com.example.movieapp.repository.UserDeviceRepository;
 import com.example.movieapp.repository.UserRepo;
 import com.example.movieapp.security.JwtTokenProvider;
+import com.google.api.client.googleapis.auth.oauth2.GoogleIdToken;
+import com.google.api.client.googleapis.auth.oauth2.GoogleIdTokenVerifier;
+import com.google.api.client.googleapis.javanet.GoogleNetHttpTransport;
+import com.google.api.client.json.jackson2.JacksonFactory;
 import lombok.RequiredArgsConstructor;
+import org.springframework.beans.factory.annotation.Value;
+import org.springframework.http.HttpStatus;
+import org.springframework.http.ResponseEntity;
 import org.springframework.security.crypto.bcrypt.BCryptPasswordEncoder;
 import org.springframework.stereotype.Service;
 
 import java.time.Instant;
 import java.time.LocalDateTime;
+import java.util.Arrays;
+import java.util.Collections;
 import java.util.Optional;
 import java.util.Random;
 
@@ -31,6 +40,13 @@ public class AuthService {
     private final BCryptPasswordEncoder passwordEncoder;
     private final RefreshTokenRepository refreshTokenRepository;
     private final UserDeviceRepository userDeviceRepository;
+    private final JwtTokenProvider jwtService;
+
+    @Value("${mobile.google.client.Id}")
+    private String mobileGoogleId;
+
+    @Value("${web.google.client.Id}")
+    private String webGoogleId;
 
     public AuthResponse signIn(SignInRequest request) {
         User user = userRepo.findByEmail(request.getEmail())
@@ -50,22 +66,7 @@ public class AuthService {
             refreshToken = refreshTokenService.createRefreshToken(user.getEmail()).getToken();
         }
 
-        Optional<UserDevice> existingDevice = userDeviceRepository.findByUserId((user.getId()));
-
-        if (existingDevice.isPresent()) {
-            UserDevice device = existingDevice.get();
-            device.setToken(accessToken);
-            device.setDeviceId(request.getDeviceId());
-            device.setCreatedAt(Instant.now());
-            userDeviceRepository.save(device);
-        } else {
-            UserDevice newDevice = new UserDevice();
-            newDevice.setUser(user);
-            newDevice.setToken(accessToken);
-            newDevice.setDeviceId(request.getDeviceId());
-            newDevice.setCreatedAt(Instant.now());
-            userDeviceRepository.save(newDevice);
-        }
+        userDeviceCreateOrUpdate(request.getDeviceId(), user, accessToken);
 
         AuthResponse response = userMapper.toAuthResponse(user);
         response.setDeviceId(request.getDeviceId());
@@ -74,6 +75,26 @@ public class AuthService {
 
         return response;
     }
+
+    private void userDeviceCreateOrUpdate(String deviceId, User user, String accessToken) {
+        Optional<UserDevice> existingDevice = userDeviceRepository.findByUserId(user.getId());
+
+        if (existingDevice.isPresent()) {
+            UserDevice device = existingDevice.get();
+            device.setToken(accessToken);
+            device.setDeviceId(deviceId);
+            device.setCreatedAt(Instant.now());
+            userDeviceRepository.save(device);
+        } else {
+            UserDevice newDevice = new UserDevice();
+            newDevice.setUser(user);
+            newDevice.setToken(accessToken);
+            newDevice.setDeviceId(deviceId);
+            newDevice.setCreatedAt(Instant.now());
+            userDeviceRepository.save(newDevice);
+        }
+    }
+
 
     public AuthResponse signUp(SignUpRequest request) {
         if (userRepo.findByEmail(request.getEmail()).isPresent())
@@ -114,6 +135,61 @@ public class AuthService {
             userId = (long) number;
         } while (userRepo.existsByUserId(userId));
         return userId;
+    }
+
+    public ResponseEntity<AuthResponse> getAuthResponseResponseEntity(GoogleIdToken idToken, String deviceId) {
+        if (idToken == null) {
+            return ResponseEntity.status(HttpStatus.UNAUTHORIZED).build();
+        }
+
+        GoogleIdToken.Payload payload = idToken.getPayload();
+        String email = payload.getEmail();
+        String name = (String) payload.get("name");
+
+        User user = userRepo.findByEmail(email)
+                .orElseGet(() -> {
+                    User newUser = User.builder()
+                            .email(email)
+                            .username(name)
+                            .subscription(false)
+                            .userId(generateUniqueUserId())
+                            .build();
+                    return userRepo.save(newUser);
+                });
+
+        String accessToken = jwtService.generateAccessToken(email);
+        String refreshToken = refreshTokenService.createRefreshToken(email).getToken();
+
+        // ✅ Qurilma bog'lanishini to‘g‘riladik
+        userDeviceCreateOrUpdate(deviceId, user, accessToken);
+
+        AuthResponse response = new AuthResponse();
+        response.setId(user.getId());
+        response.setUsername(user.getUsername());
+        response.setEmail(user.getEmail());
+        response.setSubscription(user.getSubscription());
+        response.setUserId(user.getUserId());
+        response.setToken(accessToken);
+        response.setRefreshToken(refreshToken);
+        response.setDeviceId(deviceId);
+
+        return ResponseEntity.ok(response);
+    }
+
+
+    public GoogleIdToken verifyGoogleToken(String idTokenString) {
+        try {
+            GoogleIdTokenVerifier verifier = new GoogleIdTokenVerifier.Builder(
+                    GoogleNetHttpTransport.newTrustedTransport(),
+                    JacksonFactory.getDefaultInstance())
+                    .setAudience(Arrays.asList(mobileGoogleId,webGoogleId))
+                    .build();
+
+            return verifier.verify(idTokenString);
+        } catch (Exception e) {
+            e.printStackTrace();
+            return null;
+        }
     }
 }
 
