@@ -2,6 +2,8 @@ package com.example.movieapp.controller;
 
 import com.example.movieapp.dto.*;
 import com.example.movieapp.entities.User;
+import com.example.movieapp.entities.UserDevice;
+import com.example.movieapp.repository.UserDeviceRepository;
 import com.example.movieapp.repository.UserRepo;
 import com.example.movieapp.security.JwtTokenProvider;
 import com.example.movieapp.service.AuthService;
@@ -20,8 +22,10 @@ import org.springframework.web.bind.annotation.RequestBody;
 import org.springframework.web.bind.annotation.RequestMapping;
 import org.springframework.web.bind.annotation.RestController;
 
+import java.time.Instant;
 import java.util.Collections;
 import java.util.Map;
+import java.util.Optional;
 
 @RestController
 @RequiredArgsConstructor
@@ -32,6 +36,7 @@ public class AuthController {
     private final JwtTokenProvider jwtTokenProvider;
     private final RefreshTokenService refreshTokenService;
     private final UserRepo userRepo;
+    private final UserDeviceRepository userDeviceRepository;
 
 
     @PostMapping("/sign-in")
@@ -49,11 +54,22 @@ public class AuthController {
     @PostMapping("/refresh")
     public ResponseEntity<?> refresh(@RequestBody RefreshRequest request) {
         try {
-                refreshTokenService.validateRefreshToken(request.getRefreshToken());
+            refreshTokenService.validateRefreshToken(request.getRefreshToken());
             String email = refreshTokenService.getEmailFromToken(request.getRefreshToken());
 
             String newAccessToken = jwtTokenProvider.generateAccessToken(email);
-            String newRefreshToken = refreshTokenService.createRefreshToken(email).getToken(); // eski refresh token o‘rniga yangisi
+            String newRefreshToken = refreshTokenService.createRefreshToken(email).getToken();
+
+            // ✅ USERNI OLIB, deviceId orqali tokenni yangilaymiz
+            User user = userRepo.findByEmail(email).orElseThrow();
+            Optional<UserDevice> userDeviceOpt = userDeviceRepository.findByUserId(user.getId());
+
+            if (userDeviceOpt.isPresent()) {
+                UserDevice device = userDeviceOpt.get();
+                device.setToken(newAccessToken);
+                device.setCreatedAt(Instant.now());
+                userDeviceRepository.save(device);
+            }
 
             AuthResponse response = new AuthResponse();
             response.setToken(newAccessToken);

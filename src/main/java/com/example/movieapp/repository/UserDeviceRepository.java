@@ -11,4 +11,7 @@ public interface UserDeviceRepository extends JpaRepository<UserDevice, Long> {
     void deleteByUser(User user);
 
     Optional<UserDevice> findByUserId(Long userId);
+
+    Optional<UserDevice> findByUserAndDeviceId(User user, String deviceId);
+
 }

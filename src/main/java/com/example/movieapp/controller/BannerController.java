@@ -1,39 +1,74 @@
 package com.example.movieapp.controller;
 
+import com.example.movieapp.dto.BannerDto;
 import com.example.movieapp.entities.Banner;
 import com.example.movieapp.repository.BannerRepo;
 import com.example.movieapp.repository.SeriesRepo;
+import com.example.movieapp.service.BannerService;
 import com.example.movieapp.service.FileStorageService;
 import lombok.RequiredArgsConstructor;
 import org.springframework.http.ResponseEntity;
-import org.springframework.web.bind.annotation.PostMapping;
-import org.springframework.web.bind.annotation.RequestMapping;
-import org.springframework.web.bind.annotation.RequestParam;
-import org.springframework.web.bind.annotation.RestController;
+import org.springframework.web.bind.annotation.*;
 import org.springframework.web.multipart.MultipartFile;
 
+import java.util.List;
 import java.util.Map;
 
 @RestController
+@RequestMapping("/banners")
 @RequiredArgsConstructor
-@RequestMapping("/series")
 public class BannerController {
+
+    private final BannerService bannerService;
     private final FileStorageService fileStorageService;
-    private final SeriesRepo seriesRepo;
     private final BannerRepo bannerRepo;
 
-    @PostMapping("/banners/add")
-    public ResponseEntity<?> addBanner(@RequestParam("seriesId") Long seriesId,
-                                       @RequestParam("image") MultipartFile image) {
-        String imagePath = fileStorageService.saveImage("banners", image);
-
-        Banner banner = new Banner();
-        banner.setSeries(seriesRepo.findById(seriesId).orElseThrow());
-        banner.setImage(imagePath);
-
-        bannerRepo.save(banner);
-
-        return ResponseEntity.ok(Map.of("message", "Banner qo‘shildi", "image", imagePath));
+    @GetMapping("/all")
+    public ResponseEntity<?> getAllBanners() {
+        List<Banner> banners = bannerRepo.findAll();
+        System.out.println("Banner count: " + banners.size());
+        banners.forEach(b -> System.out.println("ID: " + b.getId() + ", Image: " + b.getImage()));
+        return ResponseEntity.ok(banners);
     }
 
+    @PostMapping("/{seriesId}")
+    public ResponseEntity<?> createBanner(@RequestParam("seriesId") Long seriesId,
+                                          @RequestParam("image") MultipartFile image) {
+        try {
+            String imagePath = fileStorageService.saveImage("banners", image);
+            BannerDto bannerDto = new BannerDto();
+            bannerDto.setImage(imagePath);
+            return bannerService.createBanner(bannerDto, seriesId);
+        } catch (Exception e) {
+            return ResponseEntity.badRequest().body(e.getMessage());
+        }
+    }
+
+    @PutMapping("/{id}/{seriesId}")
+    public ResponseEntity<?> updateBanner(@PathVariable Long id,
+                                          @RequestParam("seriesId") Long seriesId,
+                                          @RequestParam(value = "image", required = false) MultipartFile image,
+                                          @RequestParam(value = "imageUrl", required = false) String imageUrl) {
+        try {
+            BannerDto bannerDto = new BannerDto();
+            if (image != null && !image.isEmpty()) {
+                String imagePath = fileStorageService.saveImage("banners", image);
+                bannerDto.setImage(imagePath);
+            } else {
+                bannerDto.setImage(imageUrl);
+            }
+            return bannerService.updateBanner(id, bannerDto, seriesId);
+        } catch (Exception e) {
+            return ResponseEntity.badRequest().body(e.getMessage());
+        }
+    }
+
+    @DeleteMapping("/{id}/{seriesId}")
+    public ResponseEntity<?> deleteBanner(@PathVariable Long id, @PathVariable Long seriesId) {
+        try {
+            return bannerService.deleteBanner(id, seriesId);
+        } catch (Exception e) {
+            return ResponseEntity.badRequest().body(e.getMessage());
+        }
+    }
 }

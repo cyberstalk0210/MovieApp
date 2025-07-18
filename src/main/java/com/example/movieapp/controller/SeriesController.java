@@ -41,7 +41,7 @@ public class SeriesController {
     public ResponseEntity<?> createSeries(@RequestParam("title") String title,
                                           @RequestParam("status") String status,
                                           @RequestParam("image") MultipartFile image) {
-        String imagePath = fileStorageService.saveImage("series", image); // << faqat series uchun
+        String imagePath = fileStorageService.saveImage("series", image);
 
         SeriesDto dto = new SeriesDto();
         dto.setTitle(title);
@@ -63,16 +63,19 @@ public class SeriesController {
         dto.setTitle(title);
         dto.setStatus(status);
 
-        // Agar image bor bo‘lsa — yangi rasm saqlanadi
         if (image != null && !image.isEmpty()) {
             String imagePath = fileStorageService.saveImage("series", image);
             dto.setImagePath(imagePath);
         } else {
-            // Aks holda eski image path saqlanadi
+
             dto.setImagePath(existing.get().getImagePath());
         }
 
         return seriesService.updateSeries(id, dto);
+    }
+    @DeleteMapping("/delete/{id}")
+    public ResponseEntity<?> deleteSeries(@PathVariable Long id) {
+        return seriesService.deleteSeries(id);
     }
 
 }

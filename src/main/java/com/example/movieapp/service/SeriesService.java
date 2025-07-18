@@ -21,6 +21,7 @@ import org.springframework.stereotype.Service;
 import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
+import java.util.Optional;
 
 @Service
 @RequiredArgsConstructor
@@ -73,13 +74,6 @@ public class SeriesService {
 
         Series saved = seriesRepo.save(series);
 
-        Banner banner = new Banner();
-        banner.setImage(seriesDto.getImagePath());
-        banner.setSeries(saved);
-
-        bannerRepo.save(banner);
-
-
         return ResponseEntity.status(HttpStatus.CREATED).body(
                 Map.of("message", "Series saved successfully", "id", saved.getId())
         );
@@ -100,15 +94,10 @@ public class SeriesService {
                     return ResponseEntity.ok(response);
                 }).orElse(ResponseEntity.notFound().build());
     }
-
-    public ResponseEntity<Map<String, Object>> deleteSeries(Long seriesId) {
-        return seriesRepo.findById(seriesId)
-                .map(series -> {
-                    seriesRepo.delete(series);
-                    Map<String, Object> response = new HashMap<>();
-                    response.put("message", "Series deleted successfully");
-                    response.put("id", seriesId);
-                    return ResponseEntity.ok(response);
-                }).orElse(ResponseEntity.notFound().build());
+    @Transactional
+    public ResponseEntity<?> deleteSeries(Long seriesId) {
+        bannerRepo.deleteBySeriesId(seriesId);
+        seriesRepo.deleteById(seriesId);
+        return ResponseEntity.ok().build();
     }
 }

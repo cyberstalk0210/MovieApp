@@ -36,7 +36,7 @@ public class JwtFilter extends OncePerRequestFilter {
                                     FilterChain filterChain) throws ServletException, IOException {
 
         String authHeader = request.getHeader("Authorization");
-        String deviceId = request.getHeader("X  -Device-Id");
+        String deviceId = request.getHeader("X-Device-Id");
 
         if (authHeader != null && authHeader.startsWith("Bearer ")) {
             String token = authHeader.substring(7);
@@ -50,7 +50,7 @@ public class JwtFilter extends OncePerRequestFilter {
                 User user = userRepo.findByEmail(email)
                         .orElseThrow(() -> new AuthenticationServiceException("Foydalanuvchi topilmadi"));
 
-                UserDevice device = userDeviceRepository.findByUser(user)
+                UserDevice device = userDeviceRepository.findByUserAndDeviceId(user, deviceId)
                         .orElseThrow(() -> new RuntimeException("Ushbu foydalanuvchiga device biriktirilmagan"));
 
                 if (!device.getToken().equals(token)) {
@@ -68,6 +68,7 @@ public class JwtFilter extends OncePerRequestFilter {
                 SecurityContextHolder.getContext().setAuthentication(authentication);
 
             } catch (AuthenticationServiceException ex) {
+                System.out.println(ex.getMessage());
                 SecurityContextHolder.clearContext();
                 response.sendError(HttpServletResponse.SC_UNAUTHORIZED, ex.getMessage());
                 return;
