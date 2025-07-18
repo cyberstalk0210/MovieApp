@@ -10,7 +10,7 @@ import java.nio.file.Paths;
 @Service
 public class DiskStorageService implements StorageService {
 
-    private final Path root = Paths.get("/home/stalker/uploads");
+    private final Path root = Paths.get("/uploads");
     
     @Override
     public String store(String path, byte[] data, String type) throws IOException {
