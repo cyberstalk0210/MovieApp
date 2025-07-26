@@ -21,11 +21,8 @@ import org.springframework.http.HttpStatus;
 import org.springframework.http.ResponseEntity;
 import org.springframework.security.crypto.bcrypt.BCryptPasswordEncoder;
 import org.springframework.stereotype.Service;
-
 import java.time.Instant;
-import java.time.LocalDateTime;
 import java.util.Arrays;
-import java.util.Collections;
 import java.util.Optional;
 import java.util.Random;
 
@@ -160,7 +157,7 @@ public class AuthService {
         String accessToken = jwtService.generateAccessToken(email);
         String refreshToken = refreshTokenService.createRefreshToken(email).getToken();
 
-        // ✅ Qurilma bog'lanishini to‘g‘riladik
+
         userDeviceCreateOrUpdate(deviceId, user, accessToken);
 
         AuthResponse response = new AuthResponse();
@@ -182,14 +179,30 @@ public class AuthService {
             GoogleIdTokenVerifier verifier = new GoogleIdTokenVerifier.Builder(
                     GoogleNetHttpTransport.newTrustedTransport(),
                     JacksonFactory.getDefaultInstance())
-                    .setAudience(Arrays.asList(mobileGoogleId,webGoogleId))
+                    .setAudience(Arrays.asList(mobileGoogleId, webGoogleId))
                     .build();
 
-            return verifier.verify(idTokenString);
+            GoogleIdToken idToken = verifier.verify(idTokenString);
+
+            if (idToken == null) {
+                System.out.println("❌ Token verification failed");
+                return null;
+            }
+
+            // Log: payload details for debugging
+            GoogleIdToken.Payload payload = idToken.getPayload();
+            System.out.println("✅ Token verified successfully");
+            System.out.println("📧 Email: " + payload.getEmail());
+            System.out.println("🎯 Audience (aud): " + payload.getAudience());
+            System.out.println("👤 Issuer (iss): " + payload.getIssuer());
+
+            return idToken;
+
         } catch (Exception e) {
             e.printStackTrace();
             return null;
         }
     }
+
 }
 
