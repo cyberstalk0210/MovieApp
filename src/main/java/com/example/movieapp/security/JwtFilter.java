@@ -8,6 +8,8 @@ import jakarta.servlet.FilterChain;
 import jakarta.servlet.ServletException;
 import jakarta.servlet.http.HttpServletRequest;
 import jakarta.servlet.http.HttpServletResponse;
+import org.slf4j.Logger;
+import org.slf4j.LoggerFactory;
 import org.springframework.security.authentication.AuthenticationServiceException;
 import org.springframework.security.authentication.UsernamePasswordAuthenticationToken;
 import org.springframework.security.core.context.SecurityContextHolder;
@@ -19,6 +21,7 @@ import java.util.List;
 
 @Component
 public class JwtFilter extends OncePerRequestFilter {
+    Logger logger = LoggerFactory.getLogger(this.getClass());
 
     private final JwtTokenProvider jwtTokenProvider;
     private final UserRepo userRepo;
@@ -54,12 +57,13 @@ public class JwtFilter extends OncePerRequestFilter {
                         .orElseThrow(() -> new RuntimeException("Ushbu foydalanuvchiga device biriktirilmagan"));
 
                 if (!device.getToken().equals(token)) {
+                    logger.error("Token mos emas ,{} ,{}",device.getToken(),token);
                     throw new AuthenticationServiceException("Token mos emas");
                 }
 
                 if (device.getDeviceId() == null || !device.getDeviceId().equals(deviceId)) {
-                    System.out.println(deviceId);
-                    System.out.println(device.getDeviceId());
+                    logger.info(deviceId);
+                    logger.error("Device ID mos emas yoki yo‘q, {}",  device.getDeviceId());
                     throw new AuthenticationServiceException("Device ID mos emas yoki yo‘q");
                 }
 

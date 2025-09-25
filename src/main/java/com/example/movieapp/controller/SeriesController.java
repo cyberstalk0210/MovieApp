@@ -1,15 +1,19 @@
 package com.example.movieapp.controller;
 
-import com.example.movieapp.dto.BannerDto;
 import com.example.movieapp.dto.GetDetailsResponse;
 import com.example.movieapp.dto.SeriesDto;
 import com.example.movieapp.entities.Series;
+import com.example.movieapp.entities.User;
 import com.example.movieapp.repository.BannerRepo;
 import com.example.movieapp.repository.SeriesRepo;
+import com.example.movieapp.repository.UserRepo;
 import com.example.movieapp.service.FileStorageService;
+import com.example.movieapp.service.MovieAccessService;
 import com.example.movieapp.service.SeriesService;
 import lombok.RequiredArgsConstructor;
+import org.springframework.http.HttpStatus;
 import org.springframework.http.ResponseEntity;
+import org.springframework.security.core.Authentication;
 import org.springframework.web.bind.annotation.*;
 import org.springframework.web.multipart.MultipartFile;
 
@@ -25,15 +29,27 @@ public class SeriesController {
     private final FileStorageService fileStorageService;
     private final BannerRepo bannerRepo;
     private final SeriesRepo seriesRepo;
+    private final UserRepo userRepo;
+    private final MovieAccessService movieAccessService;
 
     @GetMapping("/all")
     public ResponseEntity<List<SeriesDto>> series() {
         return seriesService.findAll();
     }
 
-    @GetMapping("/{id}")
-    public ResponseEntity<GetDetailsResponse> getDetails(@PathVariable Long id) {
-        return ResponseEntity.ok(seriesService.getDetails(id));
+    @GetMapping("/{serialId}")
+    public ResponseEntity<?> getDetails(@PathVariable Long serialId, Authentication authentication) {
+        String email = authentication.getName();
+        User user = userRepo.findByEmail(email)
+                .orElseThrow(() -> new RuntimeException("User not found"));
+
+        boolean canWatch = movieAccessService.canUserWatchMovie(user.getId(), serialId);
+
+        if (!canWatch) {
+            return ResponseEntity.status(HttpStatus.FORBIDDEN)
+                    .body("Siz bu serial ni ko'ra olmaysiz");
+        }
+        return ResponseEntity.ok(seriesService.getDetails(serialId));
     }
 
 
@@ -50,6 +66,7 @@ public class SeriesController {
 
         return seriesService.saveSeries(dto);
     }
+
     @PutMapping("/{id}")
     public ResponseEntity<?> updateSeries(@PathVariable Long id,
                                           @RequestParam("title") String title,
@@ -73,6 +90,7 @@ public class SeriesController {
 
         return seriesService.updateSeries(id, dto);
     }
+
     @DeleteMapping("/delete/{id}")
     public ResponseEntity<?> deleteSeries(@PathVariable Long id) {
         return seriesService.deleteSeries(id);

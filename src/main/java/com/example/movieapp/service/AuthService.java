@@ -16,6 +16,8 @@ import com.google.api.client.googleapis.auth.oauth2.GoogleIdTokenVerifier;
 import com.google.api.client.googleapis.javanet.GoogleNetHttpTransport;
 import com.google.api.client.json.jackson2.JacksonFactory;
 import lombok.RequiredArgsConstructor;
+import org.slf4j.Logger;
+import org.slf4j.LoggerFactory;
 import org.springframework.beans.factory.annotation.Value;
 import org.springframework.http.HttpStatus;
 import org.springframework.http.ResponseEntity;
@@ -30,6 +32,7 @@ import java.util.Random;
 @Service
 public class AuthService {
 
+    private static final Logger log = LoggerFactory.getLogger(AuthService.class);
     private final UserRepo userRepo;
     private final UserMapper userMapper;
     private final JwtTokenProvider jwtTokenProvider;
@@ -47,10 +50,15 @@ public class AuthService {
 
     public AuthResponse signIn(SignInRequest request) {
         User user = userRepo.findByEmail(request.getEmail())
-                .orElseThrow(() -> new RuntimeException("User not found"));
+                .orElseThrow( () ->  {
+                    log.error("User not Found");
+                    return new RuntimeException("User not found");
+                });
 
-        if (!passwordEncoder.matches(request.getPassword(), user.getPassword()))
+        if (!passwordEncoder.matches(request.getPassword(), user.getPassword())) {
+            log.debug("Invalid Password");
             throw new RuntimeException("Invalid credentials");
+        }
 
         String accessToken = jwtTokenProvider.generateAccessToken(user.getEmail());
 
@@ -82,7 +90,7 @@ public class AuthService {
             device.setDeviceId(deviceId);
             device.setCreatedAt(Instant.now());
             userDeviceRepository.save(device);
-        } else {
+        }else {
             UserDevice newDevice = new UserDevice();
             newDevice.setUser(user);
             newDevice.setToken(accessToken);
@@ -185,21 +193,16 @@ public class AuthService {
             GoogleIdToken idToken = verifier.verify(idTokenString);
 
             if (idToken == null) {
-                System.out.println("❌ Token verification failed");
+                log.error("Google Id token verification failed");
                 return null;
             }
 
-            // Log: payload details for debugging
             GoogleIdToken.Payload payload = idToken.getPayload();
-            System.out.println("✅ Token verified successfully");
-            System.out.println("📧 Email: " + payload.getEmail());
-            System.out.println("🎯 Audience (aud): " + payload.getAudience());
-            System.out.println("👤 Issuer (iss): " + payload.getIssuer());
-
+            log.info(payload.getSubject());
             return idToken;
 
         } catch (Exception e) {
-            e.printStackTrace();
+            log.error(e.getMessage());
             return null;
         }
     }

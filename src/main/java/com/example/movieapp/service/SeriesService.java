@@ -1,16 +1,14 @@
 package com.example.movieapp.service;
 
-import com.example.movieapp.dto.BannerDto;
 import com.example.movieapp.dto.GetDetailsResponse;
 import com.example.movieapp.dto.SeriesDto;
-import com.example.movieapp.entities.Banner;
 import com.example.movieapp.entities.Episode;
 import com.example.movieapp.entities.Series;
-import com.example.movieapp.mapper.BannerMapper;
 import com.example.movieapp.mapper.EpisodeMapper;
 import com.example.movieapp.mapper.SeriesMapper;
 import com.example.movieapp.repository.BannerRepo;
 import com.example.movieapp.repository.EpisodeRepo;
+import com.example.movieapp.repository.MovieAccessRepository;
 import com.example.movieapp.repository.SeriesRepo;
 import jakarta.transaction.Transactional;
 import lombok.RequiredArgsConstructor;
@@ -21,7 +19,6 @@ import org.springframework.stereotype.Service;
 import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
-import java.util.Optional;
 
 @Service
 @RequiredArgsConstructor
@@ -32,13 +29,12 @@ public class SeriesService {
     private final EpisodeRepo episodeRepo;
     private final EpisodeMapper episodeMapper;
     private final BannerRepo bannerRepo;
-    private final BannerMapper bannerMapper;
+    private final MovieAccessRepository movieAccessRepository;
 
     @Transactional
     public Series createOrFetch(SeriesDto dto) {
         if (dto.getId() != null) {
-            return seriesRepo.findById(dto.getId())
-                    .orElseThrow(() -> new RuntimeException("Series topilmadi: " + dto.getId()));
+            return seriesRepo.findById(dto.getId()).orElseThrow(() -> new RuntimeException("Series topilmadi: " + dto.getId()));
         }
         Series entity = seriesMapper.toEntity(dto);
         return seriesRepo.save(entity);
@@ -46,23 +42,16 @@ public class SeriesService {
 
 
     public ResponseEntity<List<SeriesDto>> findAll() {
-        List<SeriesDto> series = seriesRepo.findAll().stream()
-                .map(seriesMapper::toDto)
-                .toList();
+        List<SeriesDto> series = seriesRepo.findAll().stream().map(seriesMapper::toDto).toList();
         return ResponseEntity.ok(series);
     }
 
     public GetDetailsResponse getDetails(Long seriesId) {
-        Series series = seriesRepo.findById(seriesId)
-                .orElseThrow(() -> new RuntimeException("Series not found"));
+        Series series = seriesRepo.findById(seriesId).orElseThrow(() -> new RuntimeException("Series not found"));
 
         List<Episode> episodes = episodeRepo.findBySeriesId(seriesId);
 
-        return GetDetailsResponse.builder()
-                .id(series.getId())
-                .title(series.getTitle())
-                .parts(episodeMapper.toPartDtoList(episodes))
-                .build();
+        return GetDetailsResponse.builder().id(series.getId()).title(series.getTitle()).parts(episodeMapper.toPartDtoList(episodes)).build();
     }
 
     public ResponseEntity<Map<String, Object>> saveSeries(SeriesDto seriesDto) {
@@ -74,28 +63,27 @@ public class SeriesService {
 
         Series saved = seriesRepo.save(series);
 
-        return ResponseEntity.status(HttpStatus.CREATED).body(
-                Map.of("message", "Series saved successfully", "id", saved.getId())
-        );
+        return ResponseEntity.status(HttpStatus.CREATED).body(Map.of("message", "Series saved successfully", "id", saved.getId()));
     }
 
     public ResponseEntity<Map<String, Object>> updateSeries(Long seriesId, SeriesDto seriesDto) {
-        return seriesRepo.findById(seriesId)
-                .map(series -> {
-                    series.setTitle(seriesDto.getTitle());
-                    series.setStatus(seriesDto.getStatus());
-                    series.setImagePath(seriesDto.getImagePath());
-                    Series updated = seriesRepo.save(series);
+        return seriesRepo.findById(seriesId).map(series -> {
+            series.setTitle(seriesDto.getTitle());
+            series.setStatus(seriesDto.getStatus());
+            series.setImagePath(seriesDto.getImagePath());
+            Series updated = seriesRepo.save(series);
 
-                    Map<String, Object> response = new HashMap<>();
-                    response.put("message", "Series updated successfully");
-                    response.put("id", updated.getId());
+            Map<String, Object> response = new HashMap<>();
+            response.put("message", "Series updated successfully");
+            response.put("id", updated.getId());
 
-                    return ResponseEntity.ok(response);
-                }).orElse(ResponseEntity.notFound().build());
+            return ResponseEntity.ok(response);
+        }).orElse(ResponseEntity.notFound().build());
     }
+
     @Transactional
     public ResponseEntity<?> deleteSeries(Long seriesId) {
+        movieAccessRepository.deleteByMovie_Id(seriesId);
         bannerRepo.deleteBySeriesId(seriesId);
         seriesRepo.deleteById(seriesId);
         return ResponseEntity.ok().build();

@@ -26,7 +26,18 @@ public class SecurityConfig {
         http
                 .csrf(csrf -> csrf.disable())
                 .authorizeHttpRequests(auth -> auth
-                        .requestMatchers("/auth/**", "/public/**","/uploads/**").permitAll()
+                        .requestMatchers("/auth/**",
+                                "/public/**",
+                                "/uploads/**").permitAll()
+                        .requestMatchers(
+                                "/auth/**",
+                                "/public/**",
+                                "/uploads/**",
+                                "/v3/api-docs/**",
+                                "/swagger-ui/**",
+                                "/swagger-ui.html",
+                                "/swagger-ui.html/**"
+                        ).permitAll()
                         .anyRequest().authenticated())
                 .sessionManagement(sess -> sess.sessionCreationPolicy(SessionCreationPolicy.STATELESS))
                 .addFilterBefore(jwtFilter, UsernamePasswordAuthenticationFilter.class);
@@ -36,7 +47,7 @@ public class SecurityConfig {
             config.setAllowedOriginPatterns(List.of("http://localhost:3000","*", "http://37.60.235.197"));
             config.setAllowedMethods(List.of("GET", "POST", "PUT", "DELETE"));
             config.setAllowedHeaders(List.of("*"));
-            config.setAllowCredentials(false);
+            config.setAllowCredentials(true);
             return config;
         }));
         return http.build();

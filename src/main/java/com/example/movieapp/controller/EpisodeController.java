@@ -1,10 +1,14 @@
 package com.example.movieapp.controller;
 
 import com.example.movieapp.dto.EpisodeDto;
+import com.example.movieapp.repository.UserRepo;
 import com.example.movieapp.service.EpisodeService;
 import lombok.RequiredArgsConstructor;
 import org.springframework.http.ResponseEntity;
-import org.springframework.web.bind.annotation.*;
+import org.springframework.web.bind.annotation.GetMapping;
+import org.springframework.web.bind.annotation.PathVariable;
+import org.springframework.web.bind.annotation.RequestMapping;
+import org.springframework.web.bind.annotation.RestController;
 
 import java.util.List;
 
@@ -14,9 +18,10 @@ import java.util.List;
 @RequiredArgsConstructor
 public class EpisodeController {
     private final EpisodeService episodeService;
+    private final UserRepo userRepo;
 
     @GetMapping("/{sid}/episode/{eid}")
-    public ResponseEntity<EpisodeDto> getEpisode(
+    public ResponseEntity<?> getEpisode(
             @PathVariable Long sid,
             @PathVariable Long eid
     ) {
