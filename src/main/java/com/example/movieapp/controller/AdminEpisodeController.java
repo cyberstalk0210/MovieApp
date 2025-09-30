@@ -53,6 +53,7 @@ public class AdminEpisodeController {
         String imagePath = fileStorageService.saveImage("episodes", image);
         String savedFileName = Paths.get(imagePath).getFileName().toString();
 
+
         // Create DTO
         EpisodeDto episodeDto = new EpisodeDto();
         episodeDto.setSeriesId(seriesId);
