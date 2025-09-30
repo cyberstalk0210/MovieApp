@@ -1,5 +1,6 @@
 package com.example.movieapp.entities;
 
+import com.fasterxml.jackson.annotation.JsonManagedReference;
 import jakarta.persistence.*;
 import lombok.Getter;
 import lombok.NoArgsConstructor;
@@ -26,6 +27,7 @@ public class Series {
     private String status;
 
     @OneToMany(mappedBy = "series", cascade = CascadeType.ALL, orphanRemoval = true)
+    @JsonManagedReference
     private List<Episode> episodes;
 
 }

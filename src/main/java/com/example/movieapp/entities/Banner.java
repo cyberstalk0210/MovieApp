@@ -1,6 +1,7 @@
 package com.example.movieapp.entities;
 
 import com.example.movieapp.dto.SeriesDto;
+import com.fasterxml.jackson.annotation.JsonBackReference;
 import com.fasterxml.jackson.annotation.JsonIgnore;
 import jakarta.persistence.*;
 import lombok.Data;
@@ -18,7 +19,7 @@ public class Banner {
 
     @ManyToOne
     @JoinColumn(name = "series_id")
-//    @JsonIgnore
+    @JsonBackReference
     private Series series;
 }
 
