@@ -1,6 +1,7 @@
 package com.example.movieapp.controller;
 
 import com.example.movieapp.dto.SeriesDto;
+import com.example.movieapp.dto.UserAccessUpdateRequest;
 import com.example.movieapp.entities.MovieAccess;
 import com.example.movieapp.entities.Series;
 import com.example.movieapp.mapper.SeriesMapper;
@@ -9,10 +10,7 @@ import lombok.RequiredArgsConstructor;
 import org.springframework.http.ResponseEntity;
 import org.springframework.web.bind.annotation.*;
 
-import java.util.List;
-import java.util.Map;
-import java.util.Optional;
-import java.util.Set;
+import java.util.*;
 import java.util.stream.Collectors;
 
 @RestController
@@ -22,6 +20,7 @@ public class MovieAccessController {
 
     private final MovieAccessService movieAccessService;
     private final SeriesMapper seriesMapper;
+
 
     @PostMapping("")
     public ResponseEntity<MovieAccess> giveAccessMovie(
@@ -52,9 +51,26 @@ public class MovieAccessController {
     @PutMapping("/user/{userId}")
     public ResponseEntity<?> updateUserAccess(
             @PathVariable Long userId,
-            @RequestBody Set<Long> seriesIds
+            @RequestBody UserAccessUpdateRequest request
     ) {
-        movieAccessService.updateUserAccess(userId, seriesIds);
+
+        Map<Long, Integer> seriesAccessMap = request.getSeriesAccessMap() != null
+                ? request.getSeriesAccessMap()
+                : new HashMap<>();
+
+        Boolean hasSubscription = request.getSubscription();
+        Integer subscriptionDays = request.getSubscriptionDays() != null
+                ? request.getSubscriptionDays()
+                : 0;
+
+
+        movieAccessService.updateUserAccessWithSubscription(
+                userId,
+                seriesAccessMap,
+                hasSubscription != null ? hasSubscription : false,
+                subscriptionDays
+        );
+
         return ResponseEntity.ok("User access updated successfully");
     }
 

@@ -17,20 +17,20 @@ import java.util.List;
 @RequestMapping("/series")
 @RequiredArgsConstructor
 public class EpisodeController {
-    private final EpisodeService episodeService;
-    private final UserRepo userRepo;
+private final EpisodeService episodeService;
+private final UserRepo userRepo;
 
-    @GetMapping("/{sid}/episode/{eid}")
-    public ResponseEntity<?> getEpisode(
-            @PathVariable Long sid,
-            @PathVariable Long eid
-    ) {
-        return ResponseEntity.ok(episodeService.getEpisodeById(sid, eid));
-    }
+//@GetMapping("/{sid}/episode/{eid}")
+//public ResponseEntity<?> getEpisode(
+//        @PathVariable Long sid,
+//        @PathVariable Long eid
+//) {
+//    return ResponseEntity.ok(episodeService.getEpisodeById(sid, eid));
+//}
 
-    @GetMapping("/{seriesId}/episodes")
-    public ResponseEntity<List<EpisodeDto>> getEpisodesBySeries(@PathVariable Long seriesId) {
-        List<EpisodeDto> episodes = episodeService.getEpisodesBySeries(seriesId);
-        return ResponseEntity.ok(episodes);
-    }
+@GetMapping("/{seriesId}/episodes")
+public ResponseEntity<List<EpisodeDto>> getEpisodesBySeries(@PathVariable Long seriesId) {
+    List<EpisodeDto> episodes = episodeService.getEpisodesBySeries(seriesId);
+    return ResponseEntity.ok(episodes);
+}
 }

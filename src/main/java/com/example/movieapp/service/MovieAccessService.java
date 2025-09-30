@@ -12,8 +12,10 @@ import lombok.extern.slf4j.Slf4j;
 import org.springframework.http.ResponseEntity;
 import org.springframework.stereotype.Service;
 
+import java.time.LocalDate;
 import java.time.LocalDateTime;
 import java.util.List;
+import java.util.Map;
 import java.util.Optional;
 import java.util.Set;
 
@@ -25,10 +27,8 @@ public class MovieAccessService {
     private final MovieAccessRepository movieAccessRepository;
     private final UserRepo userRepository;
     private final SeriesRepo seriesRepository;
-
-    public boolean canUserWatchMovie(Long userId, Long movieId) {
-        return movieAccessRepository.existsByUserIdAndMovieIdAndPaidTrue(userId, movieId);
-    }
+    private final UserRepo userRepo;
+    private final SeriesRepo seriesRepo;
 
     public MovieAccess giveAccess(Long userId, Long seriesId, boolean paid) {
         User user = userRepository.findById(userId)
@@ -37,7 +37,7 @@ public class MovieAccessService {
                 .orElseThrow(() -> new RuntimeException("Series not found"));
 
         if (movieAccessRepository.existsByUserIdAndMovieId(userId, seriesId)) {
-            log.error("Movie access already exists");
+            log.error("Movie access already exists for user {} and series {}", userId, seriesId);
             throw new RuntimeException("User is already watching movie access");
         }
         MovieAccess access = new MovieAccess();
@@ -45,12 +45,15 @@ public class MovieAccessService {
         access.setMovie(series);
         access.setPaid(paid);
 
-        log.debug("Movie access has been given, {} , {}", access.getUser().getUsername(), access.getMovie());
+        if (Boolean.FALSE.equals(user.getSubscription()))
+            user.setSubscription(true);
+
+        log.debug("Movie access has been given: User {} for Series {}", user.getUsername(), series.getTitle());
         return movieAccessRepository.save(access);
     }
 
     public List<Series> getUserAccessedSeries(Long userId) {
-        log.debug("Getting series access IDs for user {}", userId);
+        log.debug("Getting paid series access for user {}", userId);
         return movieAccessRepository.findByUserIdAndPaidTrue(userId)
                 .stream()
                 .map(MovieAccess::getMovie)
@@ -70,7 +73,7 @@ public class MovieAccessService {
             throw new RuntimeException("User does not have movie access");
         }
 
-        log.debug("Movie access has been deleted, {} , {}", accessOpt.get().getUser().getUsername(), accessOpt.get().getMovie());
+        log.debug("Movie access deleted: User {} for Movie {}", accessOpt.get().getUser().getUsername(), accessOpt.get().getMovie().getTitle());
         movieAccessRepository.delete(accessOpt.get());
         return ResponseEntity.ok("Movie access deleted for userId=" + userId + ", movieId=" + movieId);
     }
@@ -80,29 +83,132 @@ public class MovieAccessService {
         LocalDateTime oneMonthAgo = LocalDateTime.now().minusMonths(1);
         List<MovieAccess> expired = movieAccessRepository.findByPaidTrueAndCreatedAtBefore(oneMonthAgo);
         if (!expired.isEmpty()) {
-            log.debug("Removing expired movies, {}", expired.size());
+            log.info("Removing {} expired movies based on creation date.", expired.size());
             movieAccessRepository.deleteAll(expired);
         }
     }
 
     @Transactional
-    public void updateUserAccess(Long userId, Set<Long> newSeriesIds) {
-        // mavjud access-larni olish
-        List<MovieAccess> currentAccesses = movieAccessRepository.findByUserId(userId);
+    public void updateUserAccessWithSubscription(
+            Long userId,
+            Map<Long, Integer> seriesAccessMap,
+            boolean hasSubscription,
+            Integer subscriptionDays
+    ) {
+        User user = userRepo.findById(userId)
+                .orElseThrow(() -> new RuntimeException("User topilmadi: " + userId));
 
-        // olib tashlanishi kerak bo‘lganlar
-        log.debug("Updating user access IDs for user {}", userId);
-        currentAccesses.stream()
-                .filter(access -> !newSeriesIds.contains(access.getMovie().getId()))
-                .forEach(movieAccessRepository::delete);
+        user.setSubscription(hasSubscription);
+        log.info("Updating access for user {}. Subscription: {}, Days: {}", userId, hasSubscription, subscriptionDays);
 
-        // yangi access qo‘shish
-        for (Long seriesId : newSeriesIds) {
-            if (currentAccesses.stream().noneMatch(a -> a.getMovie().getId().equals(seriesId))) {
-                log.debug("Adding series access for userId={}, seriesId={}", userId, seriesId);
-                giveAccess(userId, seriesId, true);
+        if (hasSubscription && subscriptionDays != null && subscriptionDays > 0) {
+            // Obuna Yoqilgan
+            LocalDate accessEndDate = LocalDate.now().plusDays(subscriptionDays);
+            user.setSubscriptionStartDate(LocalDate.now());
+            user.setSubscriptionEndDate(accessEndDate);
+
+            // Barcha seriallarga MovieAccess yozuvlarini qo'shish
+            List<Series> allSeries = seriesRepo.findAll();
+
+            for (Series series : allSeries) {
+                Optional<MovieAccess> existingAccessOpt = movieAccessRepository
+                        .findByUser_IdAndMovie_IdAndPaidIsTrue(userId, series.getId());
+
+                MovieAccess access = existingAccessOpt.orElseGet(MovieAccess::new);
+
+                access.setUser(user);
+                access.setMovie(series);
+                access.setPaid(true);
+                access.setAccessEndDate(accessEndDate); // Obuna muddatini belgilash
+
+                movieAccessRepository.save(access);
+                log.debug("Added/Updated access for series {} (Subscription, End Date: {})", series.getTitle(), accessEndDate);
             }
+
+        } else {
+            // Obuna O'chirilgan
+            user.setSubscriptionStartDate(null);
+            user.setSubscriptionEndDate(null);
+
+            List<MovieAccess> existingPaidAccesses = movieAccessRepository.findByUserAndPaidIsTrue(user);
+            Set<Long> updatedSeriesIds = seriesAccessMap.keySet();
+            LocalDate now = LocalDate.now();
+
+            // A. Individual Access yaratish/yangilash
+            for (Map.Entry<Long, Integer> entry : seriesAccessMap.entrySet()) {
+                Long seriesId = entry.getKey();
+                Integer days = entry.getValue();
+
+                if (days == null || days <= 0) continue;
+
+                Series series = seriesRepo.findById(seriesId)
+                        .orElseThrow(() -> new RuntimeException("Series topilmadi: " + seriesId));
+
+                Optional<MovieAccess> existingAccess = existingPaidAccesses.stream()
+                        .filter(ma -> ma.getMovie().getId().equals(seriesId))
+                        .findFirst();
+
+                MovieAccess access = existingAccess.orElseGet(MovieAccess::new);
+
+                LocalDate newEndDate = now.plusDays(days);
+
+                access.setUser(user);
+                access.setMovie(series);
+                access.setPaid(true);
+                access.setAccessEndDate(newEndDate);
+
+                movieAccessRepository.save(access);
+                log.debug("Individual access updated for series {}. End Date: {}", series.getTitle(), newEndDate);
+            }
+
+            // B. O'chirish
+            existingPaidAccesses.stream()
+                    .filter(ma -> !updatedSeriesIds.contains(ma.getMovie().getId()))
+                    .forEach(access -> {
+                        movieAccessRepository.delete(access);
+                        log.debug("Deleted expired/unselected individual access for series {}", access.getMovie().getTitle());
+                    });
         }
+
+        userRepo.save(user); // Obuna o'rnatilsa ham, o'chirilmasa ham User obyekti saqlanadi
     }
 
+
+    public boolean canUserWatchMovie(Long userId, Long serialId) {
+        User user = userRepo.findById(userId)
+                .orElseThrow(() -> {
+                    log.warn("User not found for ID: {}", userId);
+                    return new RuntimeException("User not found");
+                });
+
+        // 1. Obuna tekshiruvi
+        if (Boolean.TRUE.equals(user.getSubscription())) {
+            if (user.getSubscriptionEndDate() != null && LocalDate.now().isBefore(user.getSubscriptionEndDate())) {
+                log.debug("Access granted for user {} via general subscription.", userId);
+                return true;
+            } else {
+                log.debug("User {} subscription expired.", userId);
+            }
+        }
+
+        // 2. Shaxsiy pullik kirish tekshiruvi (Muddatini tekshirish)
+        Optional<MovieAccess> access = movieAccessRepository.findByUser_IdAndMovie_IdAndPaidIsTrue(userId, serialId);
+        if (access.isPresent()) {
+            LocalDate endDate = access.get().getAccessEndDate();
+            if (endDate != null && LocalDate.now().isBefore(endDate)) {
+                log.debug("Access granted for user {} via paid individual access.", userId);
+                return true;
+            }
+        }
+
+        // 3. Serialning Bepul (Paid=false) kirish tekshiruvi (Muddatsiz hisoblanadi)
+        Optional<MovieAccess> freeAccess = movieAccessRepository.findByUser_IdAndMovie_IdAndPaidIsFalse(userId, serialId);
+        if (freeAccess.isPresent()) {
+            log.debug("Access granted for user {} via free access.", userId);
+            return true;
+        }
+
+        log.debug("Access denied for user {} to serial {}.", userId, serialId);
+        return false;
+    }
 }

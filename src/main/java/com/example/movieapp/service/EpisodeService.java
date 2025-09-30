@@ -7,6 +7,7 @@ import com.example.movieapp.mapper.EpisodeMapper;
 import com.example.movieapp.repository.EpisodeRepo;
 import com.example.movieapp.repository.SeriesRepo;
 import lombok.RequiredArgsConstructor;
+import org.springframework.http.HttpStatus;
 import org.springframework.http.ResponseEntity;
 import org.springframework.stereotype.Service;
 
@@ -24,8 +25,6 @@ public class EpisodeService {
     private final SeriesRepo seriesRepo;
 
     public EpisodeDto getEpisodeById(Long seriesId, Long episodeId) {
-
-
 
         Episode episode = episodeRepo.findById(episodeId)
                 .orElseThrow(() -> new RuntimeException("Episode not found"));
@@ -54,30 +53,49 @@ public class EpisodeService {
     }
 
 
+    // EpisodeService.java
+
     public ResponseEntity<Map<String, Object>> updateEpisode(Long episodeId, EpisodeDto dto) {
         return episodeRepo.findById(episodeId)
                 .map(episode -> {
-                    episode.setTitle(dto.getTitle());
-                    episode.setEpisodeNumber(dto.getEpisodeNumber());
+                    // Sarlavha (Title) mavjud bo'lsa yangilanadi
+                    if (dto.getTitle() != null && !dto.getTitle().isBlank()) {
+                        episode.setTitle(dto.getTitle());
+                    }
 
-                    if (dto.getThumbnail() != null) {
+                    // Epizod raqami mavjud bo'lsa yangilanadi
+                    if (dto.getEpisodeNumber() != null) {
+                        episode.setEpisodeNumber(dto.getEpisodeNumber());
+                    }
+
+                    // Rasmni yangilash yo'li (Thumbnail) - bu endi faylning serverdagi yangi manzili
+                    if (dto.getThumbnail() != null && !dto.getThumbnail().isBlank()) {
+                        // Agar eski rasm bor bo'lsa, uni o'chirish logikasi shu yerda qo'shilishi mumkin (ixtiyoriy)
                         episode.setThumbnail(dto.getThumbnail());
                     }
 
-                    if (dto.getFileName() != null) {
+                    // Fayl nomi (agar ishlatilsa)
+                    if (dto.getFileName() != null && !dto.getFileName().isBlank()) {
                         episode.setFileName(dto.getFileName());
                     }
-                    if (dto.getVideoUrl() != null) {
+
+                    // Video URL mavjud bo'lsa yangilanadi
+                    if (dto.getVideoUrl() != null && !dto.getVideoUrl().isBlank()) {
                         episode.setVideoUrl(dto.getVideoUrl());
                     }
 
                     episodeRepo.save(episode);
+
+                    // Javob xabarini qaytarish
                     Map<String, Object> response = new HashMap<>();
-                    response.put("message", "Episode updated");
+                    response.put("message", "Episode muvaffaqiyatli yangilandi");
                     response.put("id", episode.getId());
+                    // Yangilangan DTO ni qaytarish ham mumkin:
+                    // response.put("episode", episodeMapper.toEpisodeDto(episode));
+
                     return ResponseEntity.ok(response);
                 })
-                .orElse(ResponseEntity.notFound().build());
+                .orElse(ResponseEntity.status(HttpStatus.NOT_FOUND).body(Map.of("error", "Episode topilmadi")));
     }
 
 

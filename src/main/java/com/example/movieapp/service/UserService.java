@@ -9,6 +9,7 @@ import org.springframework.http.HttpStatus;
 import org.springframework.http.ResponseEntity;
 import org.springframework.scheduling.annotation.Scheduled;
 import org.springframework.stereotype.Service;
+import org.springframework.web.server.ResponseStatusException;
 
 import java.time.LocalDate;
 import java.util.List;
@@ -31,19 +32,17 @@ public class UserService {
         if (!optionalUser.isPresent()) {
             return ResponseEntity.status(HttpStatus.NOT_FOUND).body(null);
         }
+
         User user = optionalUser.get();
         user.setUsername(userDto.getUsername());
         user.setEmail(userDto.getEmail());
-
-        if (Boolean.TRUE.equals(userDto.getSubscription()) && !Boolean.TRUE.equals(user.getSubscription())) {
-            user.setSubscriptionStartDate(LocalDate.now()); // faqat yangi obuna bo'lsa
-        }
-
         user.setSubscription(userDto.getSubscription());
+
         User updatedUser = userRepo.save(user);
 
         return ResponseEntity.ok(userMapper.toDto(updatedUser));
     }
+
     @Scheduled(cron = "0 0 0 * * ?")
     public void autoUpdateSubscriptions() {
         checkAndUpdateSubscriptions();
@@ -63,7 +62,6 @@ public class UserService {
         }
     }
 
-
     public ResponseEntity<List<UserDto>> getAllUsers() {
         List<User> users = userRepo.findAll();
         List<UserDto> userDtos = users.stream()
@@ -72,4 +70,9 @@ public class UserService {
         return ResponseEntity.ok(userDtos);
     }
 
+    public ResponseEntity<UserDto> getUserById(long id) {
+        User user = userRepo.findById(id).orElseThrow(() -> new ResponseStatusException(HttpStatus.NOT_FOUND));
+        UserDto dto = userMapper.toDto(user);
+        return ResponseEntity.ok().body(dto);
+    }
 }

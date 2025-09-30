@@ -54,7 +54,6 @@ public class AuthController {
             String newAccessToken = jwtTokenProvider.generateAccessToken(email);
             String newRefreshToken = refreshTokenService.createRefreshToken(email).getToken();
 
-            // ✅ USERNI OLIB, deviceId orqali tokenni yangilaymiz
             User user = userRepo.findByEmail(email).orElseThrow();
             Optional<UserDevice> userDeviceOpt = userDeviceRepository.findByUserId(user.getId());
 

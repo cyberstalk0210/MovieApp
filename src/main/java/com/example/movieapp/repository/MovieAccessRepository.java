@@ -1,6 +1,8 @@
 package com.example.movieapp.repository;
 
 import com.example.movieapp.entities.MovieAccess;
+import com.example.movieapp.entities.Series;
+import com.example.movieapp.entities.User;
 import org.springframework.data.jpa.repository.JpaRepository;
 
 import java.time.LocalDateTime;
@@ -22,5 +24,15 @@ public interface MovieAccessRepository extends JpaRepository<MovieAccess, Long> 
     Optional<MovieAccess> findByUserIdAndMovieIdAndPaidTrue(Long userId, Long movieId);
 
     List<MovieAccess> findByUserId(Long userId);
+
+    void deleteByUserIdAndPaidIsTrue(Long userId);
+
+    Optional<MovieAccess> findByUserAndMovie(User user, Series series);
+
+    List<MovieAccess> findByUserAndPaidIsTrue(User user);
+
+    Optional<MovieAccess> findByUser_IdAndMovie_IdAndPaidIsTrue(Long userId, Long serialId);
+
+    Optional<MovieAccess> findByUser_IdAndMovie_IdAndPaidIsFalse(Long userId, Long serialId);
 
 }

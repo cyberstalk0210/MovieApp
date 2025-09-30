@@ -7,6 +7,7 @@ import com.example.movieapp.repository.SeriesRepo;
 import com.example.movieapp.service.BannerService;
 import com.example.movieapp.service.FileStorageService;
 import lombok.RequiredArgsConstructor;
+import lombok.extern.slf4j.Slf4j;
 import org.springframework.http.ResponseEntity;
 import org.springframework.web.bind.annotation.*;
 import org.springframework.web.multipart.MultipartFile;
@@ -14,6 +15,7 @@ import org.springframework.web.multipart.MultipartFile;
 import java.util.List;
 import java.util.Map;
 
+@Slf4j
 @RestController
 @RequestMapping("/banners")
 @RequiredArgsConstructor
@@ -26,7 +28,7 @@ public class BannerController {
     @GetMapping("/all")
     public ResponseEntity<?> getAllBanners() {
         List<Banner> banners = bannerRepo.findAll();
-        System.out.println("Banner count: " + banners.size());
+        log.debug("Banner count: {}", banners.size());
         banners.forEach(b -> System.out.println("ID: " + b.getId() + ", Image: " + b.getImage()));
         return ResponseEntity.ok(banners);
     }

@@ -8,6 +8,7 @@ import com.example.movieapp.service.EpisodeService;
 import com.example.movieapp.service.FileStorageService;
 import com.example.movieapp.service.SeriesService;
 import lombok.RequiredArgsConstructor;
+import org.springframework.http.MediaType;
 import org.springframework.http.ResponseEntity;
 import org.springframework.security.access.prepost.PreAuthorize;
 import org.springframework.web.bind.annotation.*;
@@ -83,10 +84,30 @@ public class AdminEpisodeController {
 //        return seriesService.saveSeries(seriesDto);
 //    }
 
-    @PutMapping("/episodes/{episodeId}")
-    public ResponseEntity<?> updateEpisode(@PathVariable Long episodeId, @RequestBody EpisodeDto dto) {
-        return episodeService.updateEpisode(episodeId, dto);
+    @PutMapping(value = "/episodes/{episodeId}", consumes = MediaType.MULTIPART_FORM_DATA_VALUE)
+    public ResponseEntity<?> updateEpisode(
+            @PathVariable Long episodeId,
+            @RequestParam("title") String title,
+            @RequestParam("episodeNumber") Integer episodeNumber,
+            @RequestParam("videoUrl") String videoUrl,
+            @RequestParam(value = "image", required = false) MultipartFile image
+    ) {
+        String imagePath = null;
+        if (image != null && !image.isEmpty()) {
+            imagePath = fileStorageService.saveImage("episodes", image);
+        }
+
+        EpisodeDto episodeDto = new EpisodeDto();
+        episodeDto.setTitle(title);
+        episodeDto.setEpisodeNumber(episodeNumber);
+        episodeDto.setVideoUrl(videoUrl);
+
+        if (imagePath != null) {
+            episodeDto.setThumbnail(imagePath);
+        }
+        return episodeService.updateEpisode(episodeId, episodeDto);
     }
+
 
     @DeleteMapping("/episodes/{episodeId}")
     public ResponseEntity<?> deleteEpisode(@PathVariable Long episodeId) {

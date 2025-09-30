@@ -1,5 +1,6 @@
 package com.example.movieapp.controller;
 
+import com.example.movieapp.dto.EpisodeDto;
 import com.example.movieapp.dto.GetDetailsResponse;
 import com.example.movieapp.dto.SeriesDto;
 import com.example.movieapp.entities.Series;
@@ -7,6 +8,7 @@ import com.example.movieapp.entities.User;
 import com.example.movieapp.repository.BannerRepo;
 import com.example.movieapp.repository.SeriesRepo;
 import com.example.movieapp.repository.UserRepo;
+import com.example.movieapp.service.EpisodeService;
 import com.example.movieapp.service.FileStorageService;
 import com.example.movieapp.service.MovieAccessService;
 import com.example.movieapp.service.SeriesService;
@@ -18,6 +20,7 @@ import org.springframework.web.bind.annotation.*;
 import org.springframework.web.multipart.MultipartFile;
 
 import java.util.List;
+import java.util.Map;
 import java.util.Optional;
 
 @RestController
@@ -31,10 +34,30 @@ public class SeriesController {
     private final SeriesRepo seriesRepo;
     private final UserRepo userRepo;
     private final MovieAccessService movieAccessService;
+    private final EpisodeService episodeService;
 
     @GetMapping("/all")
     public ResponseEntity<List<SeriesDto>> series() {
         return seriesService.findAll();
+    }
+
+    @GetMapping("/{serialId}/episode/{episodeId}") // EpisodeController dagi getEpisode metodi SeriesControllerga ko'chirildi
+    public ResponseEntity<?> getEpisode(@PathVariable Long serialId, @PathVariable Long episodeId, Authentication authentication) {
+        String email = authentication.getName();
+        User user = userRepo.findByEmail(email)
+                .orElseThrow(() -> new RuntimeException("User not found"));
+
+        boolean canWatch = movieAccessService.canUserWatchMovie(user.getId(), serialId);
+
+        if (!canWatch) {
+            // notificationService.sendNotification(user.getUserId(), "Serial ko'rish huquqi yo'q", "Sizning obunangiz tugagan yoki bu serial uchun ruxsat berilmagan.");
+
+            return ResponseEntity.status(HttpStatus.FORBIDDEN)
+                    .body(Map.of("error", "Siz bu serialni ko'ra olmaysiz. Obuna yoki individual kirish huquqi tugagan/berilmagan."));
+        }
+
+        return ResponseEntity.ok(episodeService.getEpisodeById(serialId, episodeId));
+//        return ResponseEntity.ok("Episode content will be here (After successful access check)");
     }
 
     @GetMapping("/{serialId}")

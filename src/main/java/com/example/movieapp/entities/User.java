@@ -30,11 +30,14 @@ public class User {
     @Column(name = "subscription_start_date")
     private LocalDate subscriptionStartDate;
 
+    @Column(name = "subscription_end_date")
+    private LocalDate subscriptionEndDate;
+
     @Pattern(
             regexp = "^(?=.*[0-9])(?=.*[a-z])(?=.*[A-Z])(?=.*[@#$%^&+=!])(?=\\S+$).{8,}$",
             message = "Password must be at least 8 characters long, include uppercase, lowercase, digit and special character"
     )
-    private String password;
+    private String password;                                    
 
     @Column(unique = true)
     private Long userId;
