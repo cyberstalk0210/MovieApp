@@ -1,6 +1,5 @@
 package com.example.movieapp.entities;
 
-import com.fasterxml.jackson.annotation.JsonBackReference;
 import jakarta.persistence.*;
 import lombok.*;
 
@@ -29,6 +28,5 @@ public class Episode {
 
     @ManyToOne
     @JoinColumn(name = "series_id")
-    @JsonBackReference // <-- ADD THIS ANNOTATION
     private Series series;
 }

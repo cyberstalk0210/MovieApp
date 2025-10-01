@@ -1,6 +1,7 @@
 package com.example.movieapp.controller;
 
 import com.example.movieapp.dto.BannerDto;
+import com.example.movieapp.dto.BannerResponseDto;
 import com.example.movieapp.entities.Banner;
 import com.example.movieapp.repository.BannerRepo;
 import com.example.movieapp.repository.SeriesRepo;
@@ -14,6 +15,7 @@ import org.springframework.web.multipart.MultipartFile;
 
 import java.util.List;
 import java.util.Map;
+import java.util.stream.Collectors;
 
 @Slf4j
 @RestController
@@ -63,6 +65,11 @@ public class BannerController {
         } catch (Exception e) {
             return ResponseEntity.badRequest().body(e.getMessage());
         }
+    }
+
+    @GetMapping("/all-banners")
+    public List<BannerResponseDto> getAllBannersDto() {
+        return bannerService.getAllBannersDto();
     }
 
     @DeleteMapping("/{id}/{seriesId}")

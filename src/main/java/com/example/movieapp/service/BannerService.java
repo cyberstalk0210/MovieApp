@@ -1,12 +1,12 @@
 package com.example.movieapp.service;
 
 import com.example.movieapp.dto.BannerDto;
+import com.example.movieapp.dto.BannerResponseDto;
 import com.example.movieapp.entities.Banner;
 import com.example.movieapp.entities.Series;
 import com.example.movieapp.mapper.BannerMapper;
 import com.example.movieapp.mapper.SeriesMapper;
 import com.example.movieapp.repository.BannerRepo;
-import com.example.movieapp.repository.EpisodeRepo;
 import com.example.movieapp.repository.SeriesRepo;
 import lombok.RequiredArgsConstructor;
 import org.springframework.http.ResponseEntity;
@@ -14,6 +14,7 @@ import org.springframework.stereotype.Service;
 
 import java.util.List;
 import java.util.Optional;
+import java.util.stream.Collectors;
 
 @Service
 @RequiredArgsConstructor
@@ -23,6 +24,17 @@ public class BannerService {
     private final SeriesRepo seriesRepo;
     private final SeriesMapper seriesMapper;
     private final BannerMapper bannerMapper;
+
+    public List<BannerResponseDto> getAllBannersDto() {
+        return bannerRepo.findAll().stream()
+                .map(banner -> new BannerResponseDto(
+                        banner.getId(),
+                        banner.getImage(),
+                        banner.getSeries() != null ? banner.getSeries().getId() : null,
+                        banner.getSeries() != null ? banner.getSeries().getTitle() : "N/A"
+                ))
+                .collect(Collectors.toList());
+    }
 
     public ResponseEntity<?> createBanner(BannerDto bannerDto, Long serisId) {
         Optional<Series> byId = seriesRepo.findById(serisId);
@@ -56,7 +68,8 @@ public class BannerService {
         bannerRepo.deleteById(id);
         return ResponseEntity.ok().build();
     }
-    public List<Banner> getAllBanners(){
+
+    public List<Banner> getAllBanners() {
         return bannerRepo.findAll();
     }
 }

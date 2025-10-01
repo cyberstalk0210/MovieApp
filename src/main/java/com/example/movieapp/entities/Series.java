@@ -28,6 +28,10 @@ public class Series {
 
     @OneToMany(mappedBy = "series", cascade = CascadeType.ALL, orphanRemoval = true)
     @JsonManagedReference
+    private List<Banner> banners;
+
+    @OneToMany(mappedBy = "series", cascade = CascadeType.ALL, orphanRemoval = true)
+    @JsonManagedReference
     private List<Episode> episodes;
 
 }
